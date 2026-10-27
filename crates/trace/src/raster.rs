@@ -5,19 +5,11 @@ pub enum TraceError {
     Decode(String),
     #[error("image is empty")]
     Empty,
-    #[error("the image is {width} × {height} pixels, more than Image Trace takes ({max} megapixels)")]
+    #[error("the image is {width} × {height} pixels, more than this takes ({max} megapixels)")]
     TooLarge { width: u32, height: u32, max: u64 },
-    #[error("this isn't a flat-colour logo ({:.0}% of its solid areas match a few flat colours), so Flat Logo mode would turn its gradients into patches: use Color mode instead", (.fraction * 100.0).floor())]
-    NotFlat { fraction: f64 },
-    #[error("\"{0}\" is not a colour: write it as #rrggbb")]
-    BadPalette(String),
-    #[error(
-        "this trace would make more than {max} anchor points, more than the document can show smoothly: raise Noise, lower Paths or Colors, or pick a lower-fidelity preset"
-    )]
-    TooComplex { max: usize },
 }
 
-/// The most pixels an image to trace may have (64 megapixels: 256 MB decoded); larger images are
+/// The most pixels an image may have (64 megapixels: 256 MB decoded); larger images are
 /// refused instead of running out of memory.
 pub const MAX_PIXELS: u64 = 64 << 20;
 

@@ -12,33 +12,6 @@ fn input_request(app: &mut VectorcraftApp, method: &str, params: Value) -> Value
 }
 
 #[test]
-fn ui_set_turns_the_image_trace_preview_off_and_on() {
-    let mut app = VectorcraftApp::new(Session::new(), Services::default());
-    assert!(app.ui.image_trace_preview);
-    for on in [false, true] {
-        let r = input_request(&mut app, "ui.set", json!({"imageTracePreview": on}));
-        assert_eq!(r["ok"], true, "{r}");
-        assert_eq!(app.ui.image_trace_preview, on);
-    }
-}
-
-#[test]
-fn the_image_trace_preview_is_a_command() {
-    let mut app = VectorcraftApp::new(Session::new(), Services::default());
-    assert!(crate::menus::UI_COMMANDS.iter().any(|c| c.0 == "imageTrace.preview"));
-    assert_eq!(app.run("imageTrace.preview", json!({})), Ok(json!(false)), "toggles");
-    assert!(!app.ui.image_trace_preview);
-    assert_eq!(app.run("imageTrace.preview", json!({"on": false})), Ok(json!(false)), "stays off");
-    assert_eq!(app.run("imageTrace.preview", json!({"on": true})), Ok(json!(true)));
-    assert!(app.ui.image_trace_preview);
-    assert!(app.run("imageTrace.preview", json!({"on": "yes"})).is_err());
-    assert!(app.ui.image_trace_preview, "a bad value leaves it");
-    let r = input_request(&mut app, "engine.execute", json!({"command": "imageTrace.preview", "params": {"on": false}}));
-    assert_eq!(r["ok"], true, "{r}");
-    assert!(!app.ui.image_trace_preview, "the control channel reaches it");
-}
-
-#[test]
 fn control_input_rejects_excessive_counts_before_mutation() {
     // Only modest over-limit values on the baseline: never exercise an unbounded loop.
     for (method, params) in [("ui.click", json!({"count": 17})), ("ui.drag", json!({"steps": 257})), ("ui.drag", json!({"steps": 2, "count": 17}))] {

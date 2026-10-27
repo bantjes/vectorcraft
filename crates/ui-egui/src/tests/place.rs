@@ -533,53 +533,24 @@ fn the_control_bars_file_name_relinks_the_image() {
 }
 
 #[test]
-fn the_control_bar_and_properties_trace_a_selected_image() {
-    use crate::panels::image_trace::{TRACE_BUTTON_W, selected_trace};
-    let selected_preset = |app: &VectorcraftApp| selected_trace(app).map(|t| t.0);
-    use crate::tests_removeanchors::{at, click_control, control_frame, has, properties_frame};
+fn the_control_bar_and_properties_show_a_selected_images_actions() {
+    use crate::tests_removeanchors::{control_frame, has, properties_frame};
     let mut app = app();
     let data = vectorcraft_format::base64_encode(&png(30, 30, 72.0));
     app.run("file.place", json!({"name": "red.png", "dataBase64": data, "link": false})).unwrap();
     let ctx = egui::Context::default();
     crate::theme::install_fonts(&ctx);
     let bar = control_frame(&mut app, &ctx, vec![]);
-    for s in ["Embedded", "Unembed…", "Image Trace", "Mask", "Crop Image", "Opacity:"] {
+    for s in ["Embedded", "Unembed…", "Mask", "Crop Image", "Opacity:"] {
         assert!(has(&bar, s), "{s}");
     }
+    assert!(!has(&bar, "Image Trace"), "this build has no Image Trace");
     assert!(!has(&bar, "Stroke:"), "an image has no Fill and Stroke in the Control bar");
     let props = properties_frame(&mut app, 260.0);
-    for s in ["Unembed…", "Image Trace", "Mask", "Crop Image"] {
+    for s in ["Unembed…", "Mask", "Crop Image"] {
         assert!(has(&props, s), "Properties: {s}");
     }
-    // The button's arrow lists the presets; choosing one traces the image with it.
-    click_control(&mut app, &ctx, at(&bar, "Image Trace") + vec2(TRACE_BUTTON_W / 2.0, 0.0));
-    click_label(&mut app, &ctx, "6 Colors");
-    assert_eq!(selected_preset(&app).as_deref(), Some("6 Colors"));
-    // The button itself traces with the Default preset.
-    app.run("edit.undo", json!({})).unwrap();
-    click_label(&mut app, &ctx, "Image Trace");
-    assert_eq!(selected_preset(&app).as_deref(), Some("Default"));
-    // An Image Trace object: its preset (another traces it again), view, the panel and Expand.
-    let bar = control_frame(&mut app, &ctx, vec![]);
-    for s in ["Image Tracing", "Preset:", "Default", "View:", "Tracing Result", "Expand"] {
-        assert!(has(&bar, s), "{s}");
-    }
-    let props = properties_frame(&mut app, 260.0);
-    assert!(has(&props, "Release") && has(&props, "View:"));
-    // Another view redraws it without tracing again.
-    let traced = app.session.active().unwrap().selection.objects.clone();
-    click_control(&mut app, &ctx, at(&bar, "Tracing Result"));
-    click_label(&mut app, &ctx, "Outlines with Source Image");
-    assert_eq!(selected_trace(&app).map(|t| t.1), Some(vectorcraft_doc::TraceView::OutlinesWithSource));
-    assert_eq!(app.session.active().unwrap().selection.objects, traced, "the same object");
-    let bar = control_frame(&mut app, &ctx, vec![]);
-    click_control(&mut app, &ctx, at(&bar, "Default"));
-    click_label(&mut app, &ctx, "3 Colors");
-    assert_eq!(selected_preset(&app).as_deref(), Some("3 Colors"));
-    click_label(&mut app, &ctx, "Expand");
-    let st = app.session.active().unwrap();
-    let g = st.doc.node(st.selection.objects[0]).unwrap();
-    assert!(selected_trace(&app).is_none() && g.children().unwrap().iter().all(|c| !matches!(c.kind, NodeKind::Image(_))), "expanded");
+    assert!(!has(&props, "Image Trace"), "this build has no Image Trace");
 }
 
 #[test]

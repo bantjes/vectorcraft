@@ -7,7 +7,7 @@ use std::rc::Rc;
 use serde_json::{Value, json};
 use vectorcraft_engine::Session;
 
-use super::print::{KIND, SECTIONS};
+use super::print::KIND;
 use crate::print::{PrintJob, PrintService, Printer};
 use crate::state::Dialog;
 use crate::{Services, VectorcraftApp, theme};
@@ -58,38 +58,6 @@ fn set(app: &mut VectorcraftApp, field: &str, value: Value) {
 
 fn pages(pdf: &[u8]) -> usize {
     vectorcraft_pdf::info(pdf, None).unwrap().pages.len()
-}
-
-#[test]
-fn print_opens_the_dialog_and_every_section_draws() {
-    let (mut app, _) = app();
-    app.run("file.print", json!({})).unwrap();
-    assert_eq!(app.ui.dialog.as_ref().map(|d| d.kind.as_str()), Some(KIND));
-    assert_eq!(super::DialogKind::of(KIND), Some(super::DialogKind::Print));
-    let d = dialog(&mut app);
-    assert_eq!((d.str("printer"), d.bool("toFile")), ("Proofer".to_string(), false), "the system's default printer");
-    assert_eq!(d.fields["copies"], 1, "the document's settings, defaults when never set up");
-    for (s, mode) in SECTIONS.iter().flat_map(|s| [(s, "composite"), (s, "separations")]) {
-        set(&mut app, "__section", json!(s));
-        set(&mut app, "output", json!({"mode": mode}));
-        frame(&mut app);
-        assert!(app.ui.dialog.is_some(), "{s} closed the dialog");
-    }
-    // Tiling, a custom paper and settings that can't print draw too.
-    set(&mut app, "scaling", json!("tileImageable"));
-    set(&mut app, "media", json!("custom"));
-    set(&mut app, "__sheet", json!(99));
-    frame(&mut app);
-    set(&mut app, "copies", json!(0));
-    set(&mut app, "__section", json!("Summary"));
-    frame(&mut app);
-    assert!(app.ui.dialog.is_some());
-    let mut changed = vec![json!({"option": "scaling", "value": "tileImageable"}), json!({"option": "copies", "value": 0})];
-    super::print::labelled(&mut changed);
-    assert_eq!((changed[0]["value"].clone(), changed[1]["value"].clone()), (json!("Tile Imageable Areas"), json!(0)));
-    // The menu item and its shortcut.
-    assert!(crate::menus::menu_entries(&app).iter().any(|e| e.command.as_deref() == Some("file.print") && e.enabled));
-    assert_eq!(crate::shortcut_editor::default_command_shortcut("file.print"), Some("Cmd+P"));
 }
 
 #[test]

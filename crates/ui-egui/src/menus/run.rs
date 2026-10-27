@@ -357,11 +357,6 @@ pub fn run_ui_command(app: &mut VectorcraftApp, id: &str, p: &Value) -> Option<R
             json!(on)
         }),
         "window.toolbarAdvanced" => flag(&mut app.ui.toolbar_advanced),
-        "imageTrace.preview" => opt_bool(p, "on").map(|on| {
-            let on = on.unwrap_or(!app.ui.image_trace_preview);
-            app.ui.image_trace_preview = on;
-            json!(on)
-        }),
         "window.floatTools" => {
             let floating = match opt_bool(p, "floating") {
                 Ok(on) => on,

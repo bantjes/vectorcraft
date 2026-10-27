@@ -73,8 +73,6 @@ pub fn menu_tree_named(english_names: bool) -> Vec<(&'static str, Vec<Item>)> {
                 ),
                 c("File Info…", "file.info"),
                 Sep,
-                c("Print…", "file.print"),
-                Sep,
                 c("Exit", "app.quit"),
             ],
         ),
@@ -130,7 +128,6 @@ pub fn menu_tree_named(english_names: bool) -> Vec<(&'static str, Vec<Item>)> {
                 c("Edit Original", "links.editOriginal"),
                 Sep,
                 c("Transparency Flattener Presets…", "ui.flattenerPresetsDialog"),
-                c("Print Presets…", "ui.printPresetsDialog"),
                 c("PDF Presets…", "ui.pdfPresetsDialog"),
                 c("Perspective Grid Presets…", "ui.perspectivePresetsDialog"),
                 Sep,
@@ -299,18 +296,6 @@ pub fn menu_tree_named(english_names: bool) -> Vec<(&'static str, Vec<Item>)> {
                         c("Gap Options…", "ui.livePaintGapOptions"),
                         Sep,
                         c("Expand", "livePaint.expand"),
-                    ],
-                ),
-                sub(
-                    "Image Trace",
-                    vec![
-                        // Traced at once with the Default preset, as the Control bar's Image Trace
-                        // button does; other presets come from its arrow or the Image Trace panel
-                        // (#543: the "…" form asked for a preset's name in a text box).
-                        cp("Make", "imageTrace.make", json!({"preset": "Default"})),
-                        cp("Make and Expand", "imageTrace.makeAndExpand", json!({"preset": "Default"})),
-                        c("Release", "imageTrace.release"),
-                        c("Expand", "imageTrace.expand"),
                     ],
                 ),
                 sub(
@@ -536,7 +521,6 @@ pub fn menu_tree_named(english_names: bool) -> Vec<(&'static str, Vec<Item>)> {
                 Sep,
                 c("Hide Edges", "view.edges"),
                 c("Hide Artboards", "view.artboards"),
-                c("Show Print Tiling", "view.printTiling"),
                 c("Hide Slices", "view.slices.hide"),
                 c("Lock Slices", "view.slices.lock"),
                 c("Hide Template", "view.template"),
@@ -626,7 +610,6 @@ pub fn menu_tree_named(english_names: bool) -> Vec<(&'static str, Vec<Item>)> {
                 panel("Gradient", "gradient"),
                 panel("Graphic Styles", "graphicStyles"),
                 panel("History", "history"),
-                panel("Image Trace", "imageTrace"),
                 panel("Info", "info"),
                 panel("Layers", "layers"),
                 panel("Libraries", "libraries"),

@@ -167,11 +167,6 @@ pub fn show(app: &mut VectorcraftApp, ui: &mut Ui) {
     // that does not draw the overlay drops them, for example with the option off, with the edges
     // hidden, on the Home screen or with no document open.
     let hidden_chars = std::mem::take(&mut app.canvas.hidden_chars);
-    // A release ends the Image Trace panel's eye-button hold, also when the panel is no longer
-    // drawn, so a later press elsewhere does not show the source image.
-    if app.ui.trace_hold_source.is_some() && !ui.input(|i| i.pointer.any_down()) {
-        app.ui.trace_hold_source = None;
-    }
     // The IME geometry this pass, if the Type tool gets one; `ime::end_of_pass` consumes it after
     // the dialogs and panels draw.
     app.ime_caret_rect = None;
@@ -320,8 +315,8 @@ pub fn show(app: &mut VectorcraftApp, ui: &mut Ui) {
         rich_black: app.session.prefs.black_on_screen == "rich",
         // A tool's drag on the canvas, during an interaction (not a dialog's preview).
         dragging: app.session.in_interaction() && ui.data(|d| d.get_temp::<Drag>(drag_id())) == Some(Drag::Tool),
-        // The Image Trace panel's eye button, while it is held.
-        trace_source: app.ui.trace_hold_source.clone(),
+        // No Image Trace panel here, so nothing asks for a traced object's source image.
+        trace_source: None,
     };
     // Placed documents' bitmaps are being made: draw again when they are ready.
     if vectorcraft_render::placed_document::busy() {

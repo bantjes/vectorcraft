@@ -294,8 +294,7 @@ pub(crate) fn services(parent: Parent, ui: egui::Context) -> Services {
         // Sample Color from Screen: the system's color sampler.
         #[cfg(target_os = "macos")]
         screen_color: Some(mac_screen_color::sampler(sampled_ui)),
-        // File → Print: the system's printers and print queue.
-        print: Some(Box::new(printing::SystemPrint)),
+        // No printing in this build: File › Print is gone, and nothing reaches the system's printers.
         ..Default::default()
     }
 }

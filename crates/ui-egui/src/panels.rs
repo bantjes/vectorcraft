@@ -22,7 +22,6 @@ pub mod glyphs;
 pub mod gradient;
 pub mod graphic_styles;
 pub mod history;
-pub mod image_trace;
 pub mod info;
 pub mod layers;
 pub mod libraries;
@@ -164,7 +163,6 @@ pub fn show_icon_panel(app: &mut VectorcraftApp, ui: &mut Ui, id: &str) {
         "brushes" => brushes::show(app, ui),
         "symbols" => symbols::show(app, ui),
         "patternOptions" => pattern_options::show(app, ui),
-        "imageTrace" => image_trace::show(app, ui),
         "openType" => opentype::show(app, ui),
         "docInfo" => doc_info::show(app, ui),
         "charStyles" => text_styles::show(app, ui, text_styles::Kind::Char),
@@ -212,7 +210,6 @@ pub fn panel_menu_items(app: &mut VectorcraftApp, ui: &mut Ui, id: &str) -> bool
         "brushes" => brushes::menu(app, ui),
         "symbols" => symbols::menu(app, ui),
         "patternOptions" => pattern_options::menu(app, ui),
-        "imageTrace" => image_trace::menu(app, ui),
         "openType" => opentype::menu(app, ui),
         "docInfo" => doc_info::menu(app, ui),
         "charStyles" => text_styles::menu(app, ui, text_styles::Kind::Char),

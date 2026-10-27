@@ -40,7 +40,6 @@ mod open_documents;
 #[cfg(any(target_os = "linux", target_os = "freebsd", target_os = "dragonfly", target_os = "netbsd", target_os = "openbsd", test))]
 mod portal_save;
 mod prefs_dir;
-mod printing;
 #[cfg(all(windows, not(target_vendor = "win7")))]
 mod system_fonts;
 mod tablet;
@@ -67,7 +66,7 @@ use app::native_input_hook;
 use app::open_files;
 use host_services::services;
 #[cfg(all(test, feature = "wgpu"))]
-use prefs::{KEEP_UI_PREFS, decode_saved_prefs, keep_prefs_copy, prefs_bytes};
+use prefs::{KEEP_UI_PREFS, decode_saved_prefs, keep_prefs_copy};
 use prefs::{load_prefs, log_dir, prefs_enabled, prefs_path, read_prefs};
 #[cfg(all(test, feature = "wgpu", any(target_os = "macos", target_os = "windows")))]
 use titlebar::CUSTOM_TITLEBAR;

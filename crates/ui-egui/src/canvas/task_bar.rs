@@ -60,11 +60,6 @@ pub(super) fn task_bar(app: &mut VectorcraftApp, ui: &mut Ui, xf: &Xf) {
         let images = st.selection.objects.iter().filter_map(|id| st.doc.node(*id)).filter(|o| matches!(o.kind, NodeKind::Image(_))).count();
         images > 0 && images < n
     };
-    // An Image Trace object: the group the engine names "Image Trace", its source image first.
-    let is_trace = is_group
-        && first.as_ref().is_some_and(|f| {
-            f.name.as_deref() == Some("Image Trace") && f.children().is_some_and(|c| c.first().is_some_and(|i| matches!(i.kind, NodeKind::Image(_))))
-        });
     let mut items: Vec<(&str, &str, &str, serde_json::Value)> = vec![]; // (label, icon, command, params)
     let none = || json!({});
     if on_artboards {
@@ -80,10 +75,9 @@ pub(super) fn task_bar(app: &mut VectorcraftApp, ui: &mut Ui, xf: &Xf) {
     } else {
         // Edit Path: the Direct Selection tool, to edit the path's anchors.
         let edit_path = || (tl!("Edit Path"), "dc-direct", "tool.select", json!({"tool": "directSelection"}));
-        // As in the reference app, an image offers Image Trace and Crop Image, and traced art offers
-        // Expand (<https://community.adobe.com/announcements-651/contextual-task-bar-in-illustrator-2025-quick-actions-when-you-need-them-1546580>).
+        // As in the reference app, an image offers Crop Image
+        // (<https://community.adobe.com/announcements-651/contextual-task-bar-in-illustrator-2025-quick-actions-when-you-need-them-1546580>).
         if n == 1 && is_image {
-            items.push((tl!("Image Trace"), "image", TASK_BAR_IMAGE_TRACE, none()));
             items.push((tl!("Crop Image"), "dc-pf-crop", "ui.cropImage", none()));
         }
         // Direct-selected anchors take the place of a path's Offset Path and Simplify. For them the bar
@@ -108,8 +102,6 @@ pub(super) fn task_bar(app: &mut VectorcraftApp, ui: &mut Ui, xf: &Xf) {
             } else {
                 items.push((tl!("Unite"), "squares-unite", "object.pathfinder.unite", none()));
             }
-        } else if is_trace {
-            items.push((tl!("Expand"), "maximize-2", "imageTrace.expand", none()));
         } else if is_clip_group {
             items.push((tl!("Edit Clipping Path"), "dc-direct", "object.clippingMask.editMask", none()));
             items.push((tl!("Release Clipping Mask"), "ungroup", "object.clippingMask.release", none()));
@@ -259,9 +251,6 @@ pub(super) fn task_bar(app: &mut VectorcraftApp, ui: &mut Ui, xf: &Xf) {
         ui.ctx().request_repaint();
     }
     match run {
-        // Image Trace traces the image at once with the Default preset. As a quick trace from
-        // Properties or the Control bar, it leaves the Image Trace panel as it was.
-        Some((TASK_BAR_IMAGE_TRACE, _)) => crate::menus::invoke(app, "imageTrace.make", json!({"preset": "Default"})),
         // The Artboard tool's buttons: Artboard Options for the active artboard, as Properties'
         // icon opens it; Duplicate for every selected artboard; Rearrange All Artboards.
         Some((TASK_BAR_ARTBOARD_OPTIONS, _)) => crate::menus::invoke(app, "tool.options", json!({"tool": "artboard"})),
@@ -274,9 +263,6 @@ pub(super) fn task_bar(app: &mut VectorcraftApp, ui: &mut Ui, xf: &Xf) {
         None => {}
     }
 }
-
-/// The Contextual Task Bar's Image Trace button: a trace with the Default preset.
-const TASK_BAR_IMAGE_TRACE: &str = "taskBar.imageTrace";
 
 /// The Contextual Task Bar's Resize button with the Artboard tool: Artboard Options.
 const TASK_BAR_ARTBOARD_OPTIONS: &str = "taskBar.artboardOptions";

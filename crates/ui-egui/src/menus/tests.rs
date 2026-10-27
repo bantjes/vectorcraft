@@ -633,19 +633,6 @@ fn shortcut_pretty() {
     assert_eq!(pretty_shortcut(""), "");
 }
 
-/// #543: Object › Image Trace › Make and Make and Expand trace with the Default preset at once,
-/// with no form asking for a preset's name.
-#[test]
-fn image_trace_make_traces_with_the_default_preset() {
-    let mut app = VectorcraftApp::new(vectorcraft_engine::Session::new(), crate::Services::default());
-    app.run("file.new", json!({})).unwrap();
-    for cmd in ["imageTrace.make", "imageTrace.makeAndExpand"] {
-        let e = menu_entries(&app).into_iter().find(|e| e.command.as_deref() == Some(cmd)).unwrap();
-        assert_eq!(e.path, ["Object", "Image Trace"]);
-        assert_eq!(click_target(&e.label, cmd, &e.params), (cmd.to_string(), json!({"preset": "Default"})), "{}", e.label);
-    }
-}
-
 #[test]
 fn expand_appearance_is_an_object_menu_item_only() {
     let mut app = VectorcraftApp::new(vectorcraft_engine::Session::new(), crate::Services::default());

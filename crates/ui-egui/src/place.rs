@@ -589,7 +589,6 @@ pub fn control_bar_details(app: &mut VectorcraftApp, ui: &mut egui::Ui) -> bool 
     ui.label(egui::RichText::new(details).size(12.0).color(t.text_dim));
     ui.separator();
     link_buttons(app, ui, id, linked, &name, None);
-    crate::panels::image_trace::trace_button(app, ui, crate::panels::image_trace::TRACE_BUTTON_W);
     for (label, cmd, w) in [(tl!("Mask"), "object.maskImage", 52.0), (tl!("Crop Image"), "ui.cropImage", 84.0)] {
         if widgets::flat_button(ui, label, w).clicked() {
             crate::menus::invoke(app, cmd, json!({}));

@@ -117,17 +117,6 @@ fn an_unreadable_ui_json_is_kept_beside_it() {
 }
 
 #[test]
-fn the_image_trace_preview_setting_is_kept_across_a_restart() {
-    for preview in [false, true] {
-        let mut app = VectorcraftApp::new(vectorcraft_engine::Session::new(), Default::default());
-        app.ui.image_trace_preview = preview;
-        let saved = prefs_bytes(&app).unwrap();
-        let loaded = decode_saved_prefs(&saved).unwrap().sanitized();
-        assert_eq!(loaded.image_trace_preview, preview, "Preview {preview} after a restart");
-    }
-}
-
-#[test]
 fn the_system_title_bar_preference_keeps_the_window_decorations() {
     use craft_window::{Frame, Layout};
 

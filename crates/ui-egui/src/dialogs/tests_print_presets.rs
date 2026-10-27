@@ -9,7 +9,7 @@ use serde_json::{Value, json};
 use vectorcraft_engine::Session;
 use vectorcraft_engine::cmd::printpresets::DEFAULT_PRESET;
 
-use super::print::{KIND, PRESET_KIND, SECTIONS};
+use super::print::KIND;
 use super::print_presets::{self, Action};
 use crate::{Services, VectorcraftApp, theme};
 
@@ -95,48 +95,6 @@ fn file_print_with_params_prints_a_preset_by_name() {
     let r = app.run("file.print", json!({"path": "/tmp/sheet.pdf", "preset": "Sheet"})).unwrap();
     assert_eq!(r["pages"], 1, "{r}");
     assert_eq!(vectorcraft_pdf::info(&written.borrow()[0], None).unwrap().pages.len(), 1);
-}
-
-#[test]
-fn the_manager_adds_edits_and_deletes_presets_through_the_editor() {
-    // Edit → Print Presets works without a document too.
-    let mut app = VectorcraftApp::new(Session::new(), Default::default());
-    assert!(crate::menus::menu_entries(&app).iter().any(|e| e.command.as_deref() == Some("ui.printPresetsDialog") && e.enabled));
-    app.run("ui.printPresetsDialog", json!({})).unwrap();
-    frame(&mut app);
-    assert_eq!((kind(&app), field(&app, "selected")), (Some(print_presets::KIND), json!(DEFAULT_PRESET)));
-    // [Default] can't be edited: New… starts a copy.
-    assert!(app.run("ui.printPresetDialog", json!({"name": DEFAULT_PRESET})).is_err());
-    app.run("ui.printPresetDialog", json!({"preset": DEFAULT_PRESET})).unwrap();
-    assert_eq!((kind(&app), field(&app, "name")), (Some(PRESET_KIND), json!("Print Preset 1")));
-    for s in SECTIONS {
-        set(&mut app, "__section", json!(s));
-        frame(&mut app);
-        assert_eq!(kind(&app), Some(PRESET_KIND), "{s}");
-    }
-    set(&mut app, "name", json!("Tiled"));
-    set(&mut app, "scaling", json!("tileFull"));
-    super::confirm(&mut app).unwrap();
-    assert_eq!((kind(&app), field(&app, "selected")), (Some(print_presets::KIND), json!("Tiled")), "back to the manager");
-    frame(&mut app);
-    // A new preset can't take a name in use; Edit… renames.
-    app.run("ui.printPresetDialog", json!({"preset": "Tiled"})).unwrap();
-    assert_eq!(field(&app, "scaling"), "tileFull", "New… starts from the selected preset");
-    set(&mut app, "name", json!("tiled"));
-    assert!(super::confirm(&mut app).is_err());
-    assert_eq!(kind(&app), Some(PRESET_KIND), "stays open on a taken name");
-    app.run("ui.printPresetDialog", json!({"name": "Tiled"})).unwrap();
-    set(&mut app, "name", json!("Posters"));
-    set(&mut app, "overlap", json!(9));
-    super::confirm(&mut app).unwrap();
-    let p = &app.session.prefs.print_presets;
-    assert_eq!((p.len(), p[0].name.as_str(), p[0].settings.overlap), (1, "Posters", 9.0));
-    // Delete selects the one above ([Default]).
-    press(&mut app, Action::Delete, "Posters");
-    assert!(app.session.prefs.print_presets.is_empty());
-    assert_eq!(field(&app, "selected"), DEFAULT_PRESET);
-    super::confirm(&mut app).unwrap();
-    assert!(app.ui.dialog.is_none(), "Close");
 }
 
 #[test]

@@ -480,29 +480,6 @@ fn frame(app: &mut VectorcraftApp, ctx: &egui::Context, events: Vec<egui::Event>
     out.textures_delta.clear();
 }
 
-/// The Image Trace panel's eye-button hold ends when the pointer is released, even when the
-/// panel stopped drawing while the button was held, so a later press on the canvas does not
-/// show the source image.
-#[test]
-fn a_release_ends_the_image_trace_hold_without_the_panel() {
-    let mut app = VectorcraftApp::new(Session::new(), Default::default());
-    app.run("file.new", json!({"width": 200, "height": 200})).unwrap();
-    let made = app.run("shape.rectangle", json!({"x": 10, "y": 10, "width": 50, "height": 50})).unwrap();
-    let id = vectorcraft_doc::NodeId(made["id"].as_u64().unwrap());
-    let ctx = egui::Context::default();
-    let at = pos2(400.0, 300.0);
-    let press = |pressed| egui::Event::PointerButton { pos: at, button: egui::PointerButton::Primary, pressed, modifiers: Default::default() };
-    frame(&mut app, &ctx, vec![egui::Event::PointerMoved(at), press(true)]);
-    app.ui.trace_hold_source = Some(std::sync::Arc::new(vec![id]));
-    frame(&mut app, &ctx, vec![]);
-    assert!(app.ui.trace_hold_source.is_some(), "held while the button is down");
-    frame(&mut app, &ctx, vec![press(false)]);
-    assert_eq!(app.ui.trace_hold_source, None, "the release ends the hold");
-    frame(&mut app, &ctx, vec![press(true)]);
-    assert_eq!(app.ui.trace_hold_source, None, "a later press does not show the source image");
-    frame(&mut app, &ctx, vec![press(false)]);
-}
-
 /// The baseline marker of selected point type runs under the line, wherever its alignment
 /// puts the anchor: under centred and right-aligned type too, not from the anchor rightwards
 /// (#2879).
@@ -6100,48 +6077,6 @@ fn the_task_bar_recolors_coloured_art() {
     assert!(!has_colors(&st.doc, &st.selection.objects), "None paints have no colours");
     click(&mut app);
     assert!(app.ui.dialog.is_none(), "no Recolor button without colours");
-}
-
-/// The Contextual Task Bar shows Image Trace first for a selected image: it traces the image
-/// with the Default preset and leaves the Image Trace panel as it was. For the Image Trace
-/// object it made, the first button is Expand, which keeps only the traced paths.
-#[test]
-fn the_task_bar_traces_an_image_then_expands_the_trace() {
-    let mut app = VectorcraftApp::new(Session::new(), Default::default());
-    app.session.execute("file.new", &json!({"width": 400, "height": 300})).unwrap();
-    let img = image::RgbaImage::from_fn(20, 20, |x, _| image::Rgba(if x < 10 { [0, 0, 0, 255] } else { [255, 255, 255, 255] }));
-    let mut png = vec![];
-    img.write_to(&mut std::io::Cursor::new(&mut png), image::ImageFormat::Png).unwrap();
-    let data = vectorcraft_format::base64_encode(&png);
-    app.run("file.place", json!({"name": "half.png", "dataBase64": data, "link": false, "at": [200, 150]})).unwrap();
-    app.select_tool("selection");
-    let ctx = egui::Context::default();
-    let click_first = |app: &mut VectorcraftApp| {
-        frame(app, &ctx, vec![]);
-        frame(app, &ctx, vec![]);
-        let bar = task_bar_rect(&ctx).expect("the task bar shows");
-        // Left to right: the frame's margin, the handle and its spacing, then the first button.
-        let at = pos2(bar.left() + 8.0 + 4.0 + 6.0 + 12.0, bar.center().y);
-        let button = |pressed| egui::Event::PointerButton { pos: at, button: egui::PointerButton::Primary, pressed, modifiers: Default::default() };
-        frame(app, &ctx, vec![egui::Event::PointerMoved(at)]);
-        frame(app, &ctx, vec![button(true)]);
-        frame(app, &ctx, vec![button(false)]);
-    };
-    let first = |app: &VectorcraftApp| {
-        let st = app.session.active().unwrap();
-        st.selection.objects.first().and_then(|id| st.doc.node(*id)).cloned().unwrap()
-    };
-    assert!(matches!(first(&app).kind, NodeKind::Image(_)));
-    click_first(&mut app);
-    assert_eq!(first(&app).name.as_deref(), Some("Image Trace"), "the image was traced");
-    assert_eq!(app.ui.open_panel, None, "the Image Trace panel is left as it was");
-
-    click_first(&mut app);
-    let expanded = first(&app);
-    assert_ne!(expanded.name.as_deref(), Some("Image Trace"), "the trace was expanded");
-    let mut images = 0;
-    expanded.walk(&mut |n| images += usize::from(matches!(n.kind, NodeKind::Image(_))));
-    assert_eq!(images, 0, "only the traced paths are kept");
 }
 
 /// The labels the Contextual Task Bar draws in a headless frame (after one to lay it out), with
