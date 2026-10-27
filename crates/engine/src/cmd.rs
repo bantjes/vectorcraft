@@ -33,7 +33,6 @@ pub mod globaledit;
 pub(crate) mod gradient;
 pub(crate) mod graph;
 mod halftone;
-pub mod help;
 pub mod importmatches;
 pub(crate) mod inline;
 mod interactivity;
@@ -245,7 +244,6 @@ pub fn command_specs() -> &'static [CommandSpec] {
         v.extend(textstyles::specs());
         v.extend(fonts::specs());
         v.extend(fontfiles::specs());
-        v.extend(help::specs());
         v.extend(threads::specs());
         v.extend(textwrap::specs());
         v.extend(graph::specs());

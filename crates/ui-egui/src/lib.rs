@@ -18,7 +18,6 @@ mod brand;
 pub mod canvas;
 pub mod chrome;
 mod clipboard_probe;
-pub mod community;
 pub mod control;
 pub mod credits;
 pub mod cursors;
