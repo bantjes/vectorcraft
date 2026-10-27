@@ -3,7 +3,6 @@
 //! Pure Rust (std + serde_json). External tools (`cargo`, `curl`, `tar`) are
 //! invoked through `std::process::Command`.
 
-mod affinity_corpus;
 mod assets;
 mod brands;
 mod bundle;
@@ -34,9 +33,8 @@ commands:
   wasm            cargo check --target wasm32-unknown-unknown for the wasm-safe crates and the web app
   test            the workspace tests (cargo nextest when installed, else cargo test), then the doctests
   ci              fmt --check, clippy -D warnings, test, doctests, no-bundled-fonts, pdf-deps, assets, brands, cursors (warnings only), layers, wasm (stops at first failure)
-  corpus [--download] [--affinity]
-                  show where test corpora live; --download fetches PngSuite into corpus/pngsuite,
-                  --affinity the pinned public Affinity documents into corpus/affinity
+  corpus [--download]
+                  show where test corpora live; --download fetches PngSuite into corpus/pngsuite
   bundle          build dist/VectorCraft.app (macOS) with assets/app-icon/vectorcraft.icns
   ico <out.ico> <png>...
                   pack PNGs into a Windows .ico (used by packaging/icons.sh)
@@ -58,7 +56,6 @@ fn main() -> ExitCode {
         Some("wasm") => cmd_wasm(),
         Some("test") => cmd_test().and_then(|()| cmd_doctests()),
         Some("ci") => cmd_ci(),
-        Some("corpus") if rest.contains(&"--affinity") => affinity_corpus::fetch(),
         Some("corpus") => cmd_corpus(rest.contains(&"--download")),
         Some("bundle") => bundle::run(&root()),
         Some("ico") => ico::run(&rest),
@@ -329,8 +326,6 @@ Tests that use a corpus skip cleanly when it is absent.
   corpus/tiff/       libtiff pics (optional)
   corpus/exr/        OpenEXR sample images (optional)
   corpus/raw/        raw.pixls.us samples, CC0 (optional)
-  corpus/affinity/   public Affinity documents (CC0/MIT/Apache-2.0) at pinned commits, sha256
-                     verified: oracles for the Affinity reader. Fetch: cargo xtask corpus --affinity
 ",
         corpus.display()
     );

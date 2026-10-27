@@ -389,23 +389,3 @@ fn a_file_with_the_resolution_out_of_range_opens_with_it_in_range() {
         assert_eq!((out["width"].as_u64(), out["height"].as_u64()), (Some(pixels), Some(pixels)), "saved as {saved}");
     }
 }
-
-#[test]
-fn a_gradient_exports_at_the_resolution_the_file_opens_with() {
-    for saved in [0.0, -5.0] {
-        let mut s = session();
-        let r = id(&s.execute("shape.rectangle", &json!({"x": 0, "y": 0, "width": 720, "height": 720})).unwrap());
-        s.execute("paint.setFill", &json!({"gradient": {"kind": "linear"}, "ids": [r.0]})).unwrap();
-        reopen_with_ppi(&mut s, saved);
-        // EMF writes the gradient as an image at the raster effects resolution: 720 pt at 1 ppi.
-        let region = vectorcraft_geom::Rect::new(0.0, 0.0, 720.0, 720.0);
-        let out = vectorcraft_metafile::export(&s.doc().unwrap().doc, region, vectorcraft_metafile::Kind::Emf).unwrap();
-        let mut sizes = vec![];
-        vectorcraft_metafile::import(&out.bytes).unwrap().document.walk(|n| {
-            if let NodeKind::Image(im) = &n.kind {
-                sizes.push((im.width, im.height));
-            }
-        });
-        assert_eq!(sizes, [(10, 10)], "saved as {saved}");
-    }
-}

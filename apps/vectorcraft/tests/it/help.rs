@@ -8,15 +8,14 @@ use std::time::{Duration, Instant};
 
 const BIN: &str = env!("CARGO_BIN_EXE_vectorcraft");
 
-/// Runs the desktop binary without a display and with a control port it cannot parse, so a
-/// regression exits with that error instead of opening a window.
+/// Runs the desktop binary without a display, so a regression fails to open a window (or is
+/// stopped at the deadline) instead of printing the usage.
 fn run(args: &[&str], env: &[(&str, &str)]) -> Output {
     let mut child = Command::new(BIN)
         .args(args)
         .env_remove("DISPLAY")
         .env_remove("WAYLAND_DISPLAY")
         .env_remove("WAYLAND_SOCKET")
-        .env("VECTORCRAFT_CONTROL_PORT", "not-a-port")
         .env("VECTORCRAFT_NO_PREFS", "1")
         .envs(env.iter().copied())
         .stdin(Stdio::null())
@@ -54,11 +53,9 @@ fn prints_usage(args: &[&str], env: &[(&str, &str)]) {
     assert!(out.status.success(), "{args:?}: {}", String::from_utf8_lossy(&out.stderr));
     assert!(out.stderr.is_empty(), "{args:?}: {}", String::from_utf8_lossy(&out.stderr));
     assert!(stdout.starts_with("Usage: vectorcraft "), "{args:?}: {stdout}");
-    for flag in ["--control", "--automation-read-root", "--automation-write-root", "--in-window-menus", "--version", "--help"] {
+    for flag in ["--in-window-menus", "--version", "--help"] {
         assert!(stdout.contains(flag), "{args:?}: usage doesn't mention {flag}: {stdout}");
     }
-    // Headless work is the CLI's: the usage says where to go.
-    assert!(stdout.contains("vectorcraft-cli"), "{args:?}: {stdout}");
 }
 
 #[test]
@@ -68,9 +65,4 @@ fn help_prints_usage_and_exits_before_startup() {
     // After a file or a flag, too: nothing is opened.
     prints_usage(&["drawing.svg", "--help"], &[]);
     prints_usage(&["--in-window-menus", "-h"], &[]);
-}
-
-#[test]
-fn help_wins_over_a_bad_control_port_variable() {
-    prints_usage(&["--help"], &[("VECTORCRAFT_CONTROL_PORT", "abc")]);
 }

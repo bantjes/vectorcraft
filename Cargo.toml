@@ -42,11 +42,9 @@ vectorcraft-tools = { path = "crates/tools" }
 vectorcraft-engine = { path = "crates/engine", default-features = false }
 vectorcraft-ui-egui = { path = "crates/ui-egui" }
 vectorcraft-testkit = { path = "crates/testkit" }
-vectorcraft-cad = { path = "crates/cad" }
 vectorcraft-eps = { path = "crates/eps" }
 vectorcraft-metafile = { path = "crates/metafile" }
 vectorcraft-plugins = { path = "crates/plugins" }
-vectorcraft-affinity = { path = "crates/affinity" }
 vectorcraft-scriptcheck = { path = "crates/scriptcheck" }
 
 # foundation

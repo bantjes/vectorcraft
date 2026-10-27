@@ -284,13 +284,11 @@ pub fn command_specs() -> &'static [CommandSpec] {
         v.extend(links::specs());
         v.extend(linkfiles::specs());
         v.extend(pdfcmds::specs());
-        v.extend(fileio::dxf::specs());
         v.extend(fileio::eps::specs());
         v.extend(package::specs());
         v.extend(slices::specs());
         v.extend(print::specs());
         v.extend(recovery::specs());
-        v.extend(fileio::dxfimport::specs());
         v.extend(webexport::specs());
         v.extend(assets::specs());
         v.extend(css::specs());

@@ -438,7 +438,7 @@ mod mac {
 
 #[cfg(test)]
 mod tests {
-    use vectorcraft_engine::cmd::clipboard::{EMF, PASTE_ORDER};
+    use vectorcraft_engine::cmd::clipboard::PASTE_ORDER;
 
     use super::*;
 
@@ -484,9 +484,9 @@ mod tests {
         assert!(windows_formats(EPS).contains(&"Encapsulated PostScript") && windows_formats(PDF).contains(&"Portable Document Format"));
         for asked in PASTE_ORDER {
             // Each type's data is the flavour asked for (a bitmap its own type): what
-            // `clipboard.import*` then reads. Text and metafiles come another way.
+            // `clipboard.import*` then reads. Text comes another way.
             assert!(pasteboard_types(asked).iter().all(|(_, mime)| *mime == asked || asked == BITMAP), "{asked}");
-            assert_eq!(pasteboard_types(asked).is_empty(), [TEXT, EMF].contains(&asked), "{asked}");
+            assert_eq!(pasteboard_types(asked).is_empty(), asked == TEXT, "{asked}");
         }
         // Vector art before text, text before bitmaps.
         let at = |m| PASTE_ORDER.iter().position(|x| *x == m).unwrap();

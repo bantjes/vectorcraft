@@ -11,7 +11,7 @@ use super::super::*;
 use super::{err, source};
 
 /// The `document.open` options besides the file. The PDF ones (pages, box, password, text,
-/// layers) and the DXF ones are ignored by other formats.
+/// layers) are ignored by other formats.
 #[derive(Clone, Debug, PartialEq)]
 pub struct LoadOptions {
     /// 1-based pages to import, such as `"2-3, 5"`; `None` = every page.
@@ -30,8 +30,6 @@ pub struct LoadOptions {
     /// A PDF's optional content groups become layers (else one layer per page, without the art
     /// that is off).
     pub layers: bool,
-    /// How a DXF drawing comes in (the `dxf` param, see [`super::dxfimport`]).
-    pub dxf: vectorcraft_cad::ImportOptions,
     /// An Illustrator EPS or `.ai` that carries the editing copy of its art opens from it (its
     /// layers, hidden objects and the art outside its artboards); else only what its page or PDF
     /// part prints comes in.
@@ -51,7 +49,6 @@ impl Default for LoadOptions {
             grays: Grays::default(),
             text_as: TextAs::default(),
             layers: true,
-            dxf: Default::default(),
             editing_data: true,
             trust_editing_data: false,
         }
@@ -61,8 +58,7 @@ impl Default for LoadOptions {
 impl LoadOptions {
     /// From command params: `pages` (`"2-3, 5"`, a page number or `"all"`), `page` (one page, when
     /// `pages` isn't given), `cropTo` (or `crop`), `password`, `colorMode` (`rgb` | `cmyk`) with `grays`,
-    /// `textAs` (`text` | `outlines`), `layers` (true | false), `editingData` (true | false | `always`) and `dxf`
-    /// (the DXF import options).
+    /// `textAs` (`text` | `outlines`), `layers` (true | false), and `editingData` (true | false | `always`).
     pub fn from_params(cmd: &str, p: &Value) -> Result<Self> {
         let pages = match p.get("pages").filter(|v| !v.is_null()).or_else(|| p.get("page").filter(|v| !v.is_null())) {
             None => None,
@@ -90,8 +86,7 @@ impl LoadOptions {
             Some(Value::String(s)) if s.eq_ignore_ascii_case("always") => (true, true),
             Some(v) => (v.as_bool().ok_or_else(|| bad(cmd, "editingData must be true, false or \"always\""))?, false),
         };
-        let dxf = super::dxfimport::options(cmd, p.get("dxf"))?;
-        Ok(Self { pages, crop, password, color_mode, grays, text_as, layers, dxf, editing_data, trust_editing_data })
+        Ok(Self { pages, crop, password, color_mode, grays, text_as, layers, editing_data, trust_editing_data })
     }
 
     /// Does the document read only part of the file, or read it differently (a page range, another

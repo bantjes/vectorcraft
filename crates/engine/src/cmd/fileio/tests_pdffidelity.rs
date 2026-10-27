@@ -164,7 +164,6 @@ fn exports_that_draw_type_in_a_missing_font_say_it_is_the_fallback_font() {
         json!({"format": "pdf", "advanced": {"outlineText": false}}),
         json!({"format": "png"}),
         json!({"format": "eps"}),
-        json!({"format": "emf"}),
         json!({"format": "svg", "outlineText": true}),
         json!({"format": "svg", "embedFonts": true}),
     ] {

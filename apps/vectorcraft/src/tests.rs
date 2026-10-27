@@ -205,13 +205,7 @@ const LINUX_TYPES: &[(&str, &str)] = &[
     ("tiff", "image/tiff"),
     ("bmp", "image/bmp"),
     ("vctemplate", "application/x-vectorcraft-template"),
-    ("dxf", "image/vnd.dxf"),
-    ("emf", "image/emf"),
-    ("wmf", "image/wmf"),
     ("eps", "image/x-eps"),
-    ("af", "application/x-affinity"),
-    ("afdesign", "application/x-affinity"),
-    ("afpub", "application/x-affinity"),
 ];
 
 /// The types in `LINUX_TYPES` that shared-mime-info defines. The MIME package declares every
@@ -227,9 +221,6 @@ const LINUX_SHARED_TYPES: &[&str] = &[
     "image/webp",
     "image/tiff",
     "image/bmp",
-    "image/vnd.dxf",
-    "image/emf",
-    "image/wmf",
     "image/x-eps",
 ];
 

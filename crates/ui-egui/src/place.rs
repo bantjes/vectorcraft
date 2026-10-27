@@ -145,10 +145,6 @@ fn place_file(app: &mut VectorcraftApp, p: &Value, read: Read) -> Result<Value, 
     if crate::dialogs::import_pdf::offer_place(app, p) {
         return Ok(Value::Null);
     }
-    // A DXF drawing asks for its import options.
-    if crate::dialogs::dxf_import::offer_place(app, p) {
-        return Ok(json!({ "dialog": crate::dialogs::dxf_import::KIND }));
-    }
     let mut p = p.clone();
     if ["at", "rect", "replace"].iter().all(|k| p.get(k).is_none())
         && let Some(v) = app.view()

@@ -242,7 +242,7 @@ fn enveloped_type_exports_distorted_in_every_format() {
         undated(&export_pdf(d, &vectorcraft_pdf::PdfOptions { created: Some(at), native: Some(vectorcraft_format::save(d, false)), ..o }).unwrap())
     };
     assert_eq!(pdf(0), pdf(1), "a PDF dated a second later differs only in its dates and file ID");
-    for format in ["svg", "pdf", "eps", "emf", "dxf"] {
+    for format in ["svg", "pdf", "eps"] {
         s.execute("object.envelope.options", &json!({"bend": 0})).unwrap();
         let flat = export(&mut s, format);
         assert_eq!(export(&mut s, format), flat, "{format} exports are repeatable");

@@ -29,11 +29,8 @@ vectorcraft-trace = { workspace = true }
 vectorcraft-svg = { workspace = true }
 vectorcraft-format = { workspace = true }
 vectorcraft-pdf = { workspace = true }
-vectorcraft-cad = { workspace = true }
 vectorcraft-eps = { workspace = true }
-vectorcraft-metafile = { workspace = true }
 vectorcraft-plugins = { workspace = true }
-vectorcraft-affinity = { workspace = true }
 vectorcraft-scriptcheck = { workspace = true }
 image = { workspace = true }
 flate2 = { workspace = true }
@@ -51,7 +48,6 @@ log = { workspace = true }
 rustix = { workspace = true, features = ["std", "process"] }
 
 [dev-dependencies]
-vectorcraft-affinity = { workspace = true, features = ["synth"] }
 crc32fast = { workspace = true }
 vectorcraft-testkit = { workspace = true }
 proptest = { workspace = true }

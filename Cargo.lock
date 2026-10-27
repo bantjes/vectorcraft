@@ -3860,9 +3860,6 @@ name = "ruzstd"
 version = "0.9.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "69e4ce4a039f42bf25920b95667e4d789e98749ab11bbb8d2c2936f788421bb5"
-dependencies = [
- "twox-hash",
-]
 
 [[package]]
 name = "ryu"
@@ -4569,12 +4566,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "twox-hash"
-version = "2.1.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "86a801b3cea342a06d468c8710662aa29e5e05e4f5c0d62f00bbb7f2ad7941c2"
-
-[[package]]
 name = "type-map"
 version = "0.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4800,17 +4791,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "vectorcraft-affinity"
-version = "0.17.0"
-dependencies = [
- "crc32fast",
- "flate2",
- "image",
- "proptest",
- "ruzstd",
-]
-
-[[package]]
 name = "vectorcraft-brush"
 version = "0.17.0"
 dependencies = [
@@ -4820,22 +4800,6 @@ dependencies = [
  "vectorcraft-color",
  "vectorcraft-doc",
  "vectorcraft-geom",
-]
-
-[[package]]
-name = "vectorcraft-cad"
-version = "0.17.0"
-dependencies = [
- "image",
- "kurbo 0.13.1",
- "serde_json",
- "vectorcraft-brush",
- "vectorcraft-color",
- "vectorcraft-doc",
- "vectorcraft-effects",
- "vectorcraft-geom",
- "vectorcraft-pathops",
- "vectorcraft-text",
 ]
 
 [[package]]
@@ -4902,15 +4866,12 @@ dependencies = [
  "serde",
  "serde_json",
  "thiserror 2.0.21",
- "vectorcraft-affinity",
  "vectorcraft-brush",
- "vectorcraft-cad",
  "vectorcraft-color",
  "vectorcraft-doc",
  "vectorcraft-eps",
  "vectorcraft-format",
  "vectorcraft-geom",
- "vectorcraft-metafile",
  "vectorcraft-pathops",
  "vectorcraft-pdf",
  "vectorcraft-plugins",
@@ -5195,7 +5156,6 @@ dependencies = [
  "serde_json",
  "toml",
  "vectorcraft-brush",
- "vectorcraft-cad",
  "vectorcraft-color",
  "vectorcraft-doc",
  "vectorcraft-effects",

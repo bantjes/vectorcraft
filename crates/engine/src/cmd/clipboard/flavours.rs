@@ -24,9 +24,6 @@ pub const PDF: &str = "application/pdf";
 pub const PNG: &str = "image/png";
 /// Any bitmap (PNG, BMP…), in what Paste asks the system clipboard for.
 pub const BITMAP: &str = "image/*";
-/// An EMF (or WMF) picture: what Windows apps copy as vector art (the system clipboard reads it
-/// where the platform offers it).
-pub const EMF: &str = "image/emf";
 /// An EPS (or other PostScript) picture: what drawing and typesetting apps copy as vector art
 /// beside, or instead of, a PDF (#1499).
 pub const EPS: &str = "application/postscript";
@@ -36,7 +33,7 @@ pub const EPS: &str = "application/postscript";
 pub const AI: &str = "application/x-ai";
 /// What Paste reads from other apps, best first: vector art before text, text before bitmaps
 /// (word processors offer a picture of copied text too).
-pub const PASTE_ORDER: [&str; 6] = [SVG, PDF, EPS, EMF, TEXT, BITMAP];
+pub const PASTE_ORDER: [&str; 5] = [SVG, PDF, EPS, TEXT, BITMAP];
 /// Is `text` only an address (a web page's, an image's, a file's)? A browser's Copy Image puts the
 /// image's address as text next to the picture: then the picture is what Paste takes (#597). An
 /// address alone pastes as text, and nothing is fetched.
@@ -90,7 +87,6 @@ pub fn file_flavour(name: &str, head: &[u8], mimes: &[&str]) -> Option<&'static 
         "eps" => (EPS, EPS),
         "ai" | "ait" if head.starts_with(b"%PDF") => (PDF, AI),
         "ai" | "ait" if vectorcraft_pdf::is_postscript(head) => (EPS, EPS),
-        "emf" | "wmf" => (EMF, EMF),
         _ if f.raster => (BITMAP, f.mime),
         _ => return None,
     };
@@ -199,15 +195,6 @@ pub fn specs() -> Vec<CommandSpec> {
             "{dataBase64, page?: 1, password? (an encrypted PDF), editingData?: false (true: the data is a .ai or .ait file, read as document.open reads it; when document.open would use its editing data, every object of that data comes in, each layer's objects in stacking order and a hidden layer's objects hidden; else page `page`), center?: [x, y]} replace the clipboard with the objects of one PDF page, or of a .ai file's editing data (with the images, patterns and swatches they use; a .ai saved without PDF compatibility: every object of its editing data, as document.open reads it, with or without editingData), centred on `center` (default: the first artboard) → {count, warnings}; then run edit.paste",
             has_doc,
             import_pdf
-        ),
-        cmd!(
-            query "clipboard.importEmf",
-            "Load Metafile into Clipboard",
-            [],
-            None,
-            "{dataBase64 (EMF or WMF bytes), center?: [x, y]} replace the clipboard with the picture's objects (paths, clipping groups, images, point type; the images they use), centred on `center` (default: the first artboard) → {count, warnings}; records VectorCraft doesn't read are skipped with one warning; then run edit.paste",
-            has_doc,
-            import_emf
         ),
         cmd!(
             query "clipboard.importEps",
@@ -453,15 +440,6 @@ fn import_text(s: &mut Session, p: &Value) -> Result<Value> {
     let n = Node::new(NodeId(1), NodeKind::Text(Box::new(t)));
     let count = s.load_clipboard(Clipboard { nodes: vec![n], ..Default::default() }, p)?;
     Ok(json!({ "count": count }))
-}
-
-fn import_emf(s: &mut Session, p: &Value) -> Result<Value> {
-    const C: &str = "clipboard.importEmf";
-    let bytes = data_param(p, C)?;
-    if vectorcraft_metafile::sniff(&bytes).is_none() {
-        return Err(bad(C, "the data isn't an EMF or WMF picture"));
-    }
-    import_picture(s, p, C, "Clipboard.emf", &bytes)
 }
 
 fn import_eps(s: &mut Session, p: &Value) -> Result<Value> {

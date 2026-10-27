@@ -19,16 +19,4 @@
     <sub-class-of type="application/pdf"/>
     <glob pattern="*.ait"/>
   </mime-type>
-  <!-- An .af file gets this type only when it starts with the Affinity container signature and
-       the document kind. -->
-  <mime-type type="application/x-affinity">
-    <comment>Affinity document</comment>
-    <glob pattern="*.afdesign"/>
-    <glob pattern="*.afpub"/>
-    <magic>
-      <match type="string" offset="0" value="\x00\xff\x4b\x41">
-        <match type="string" offset="8" value="nsrP"/>
-      </match>
-    </magic>
-  </mime-type>
 </mime-info>

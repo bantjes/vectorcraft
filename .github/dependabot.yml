@@ -4,7 +4,6 @@ updates:
   - package-ecosystem: "cargo"
     directories:
       - "/"
-      - "/crates/affinity/fuzz"
       - "/crates/plugins/example"
     schedule:
       interval: "daily"

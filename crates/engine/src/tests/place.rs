@@ -241,7 +241,6 @@ fn a_file_read_apart_from_the_session_places_as_file_place_does() {
     let (pdf, native, eps) = (serialize(&mut src, "pdf"), serialize(&mut src, "vectorcraft"), eps_of(&mut src));
     // SVG is serialized as text.
     let svg = src.execute("document.serialize", &json!({"format": "svg"})).unwrap()["text"].as_str().unwrap().as_bytes().to_vec();
-    let dxf = serialize(&mut src, "dxf");
     let dir = std::env::temp_dir().join(format!("vc-place-apart-{}", std::process::id()));
     std::fs::create_dir_all(&dir).unwrap();
     let saved = |name: &str, bytes: &[u8]| {
@@ -258,7 +257,6 @@ fn a_file_read_apart_from_the_session_places_as_file_place_does() {
         file("words.docx", &words),
         with(file("art.svg", &svg), json!({"rect": [10, 10, 80, 40]})),
         file("art.eps", &eps),
-        file("plan.dxf", &dxf),
         json!({"path": pdf_path}),
         json!({"path": pdf_path, "link": false, "crop": "bounding"}),
         json!({"path": native_path}),
@@ -378,17 +376,13 @@ fn a_linked_image_keeps_the_preview_made_when_its_file_was_read() {
     assert!(d.images["embedded"].proxy.is_none());
 }
 
-/// Type and a DXF drawing fitted to the artboard, read apart from the session while the artboard
-/// under `at` changes size, are placed against the artboard as it is when they are placed: as
-/// `file.place` places them after the change, which is what a replay of the journal does.
+/// Type read apart from the session while the artboard under `at` changes size is placed against
+/// the artboard as it is when it is placed: as `file.place` places it after the change, which is
+/// what a replay of the journal does.
 #[test]
 fn a_file_read_apart_from_the_session_is_placed_against_the_artboard_as_it_is_then() {
-    let mut src = Session::new();
-    src.execute("file.new", &json!({"width": 100, "height": 50})).unwrap();
-    src.execute("shape.rectangle", &json!({"x": 5, "y": 5, "width": 20, "height": 10})).unwrap();
-    let dxf = serialize(&mut src, "dxf");
     let text = with(file("notes.txt", b"Words to place"), json!({"text": {}, "at": [100, 150]}));
-    for p in [text, with(file("plan.dxf", &dxf), json!({"dxf": {"fit": true}, "at": [100, 150]}))] {
+    for p in [text] {
         let (mut a, mut b) = (session(), session());
         let read = b.prepare_place(&p).unwrap().read().unwrap();
         for s in [&mut a, &mut b] {

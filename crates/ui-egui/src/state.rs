@@ -525,9 +525,6 @@ pub struct UiState {
     /// dialog is gone.
     #[serde(skip)]
     pub links_search: Option<u64>,
-    /// The DXF Options chosen last (`document.exportDxf` options; null: never used).
-    #[serde(default)]
-    pub dxf_options: Value,
     /// The EPS Options chosen last (`document.exportEps` options; null: never used).
     #[serde(default)]
     pub eps_options: Value,
@@ -549,10 +546,6 @@ pub struct UiState {
     /// them (#1732).
     #[serde(default)]
     pub transform_each: Value,
-    /// The DXF Import Options chosen last (fit, scaleLineweights, center, mergeLayers; null:
-    /// never used).
-    #[serde(default)]
-    pub dxf_import: Value,
     /// The Home screen is shown over the open documents (`app.home`): the active document's uid
     /// and the document count when it opened. Choosing a tab, or a document opening, closing or
     /// becoming active, leaves it.
@@ -854,13 +847,11 @@ impl Default for UiState {
             fonts_dialog: None,
             dialog_search: None,
             links_search: None,
-            dxf_options: Value::Null,
             eps_options: Value::Null,
             offset_path: Value::Null,
             simplify: Value::Null,
             move_options: Value::Null,
             transform_each: Value::Null,
-            dxf_import: Value::Null,
             home: None,
             layers_panel: Default::default(),
             layers_filter: Default::default(),

@@ -343,8 +343,6 @@ pub const UNCHECKED: &[&str] = &[
     "css.export",
     "css.generate",
     "css.selection",
-    "document.dxfInfo",
-    "document.exportDxf",
     "document.exportEps",
     "document.exportForScreens",
     "document.exportForWeb",

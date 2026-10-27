@@ -436,7 +436,6 @@ pub const FORMATS: &[Format] = &[
     },
     Format { id: "png8", label: "PNG-8", extensions: &["png"], mime: "image/png", read: false, write: true, raster: true, options: PALETTE_OPTIONS },
     Format { id: "txt", label: "Text", extensions: TEXT_EXTS, mime: "text/plain", read: false, write: true, raster: false, options: text::OPTIONS },
-    Format { id: "dxf", label: "DXF", extensions: &["dxf"], mime: "image/vnd.dxf", read: true, write: true, raster: false, options: dxf::OPTIONS },
     Format {
         id: "eps",
         label: "EPS",
@@ -447,8 +446,6 @@ pub const FORMATS: &[Format] = &[
         raster: false,
         options: eps::OPTIONS,
     },
-    Format { id: "emf", label: "EMF", extensions: &["emf"], mime: "image/emf", read: true, write: true, raster: false, options: metafile::OPTIONS },
-    Format { id: "wmf", label: "WMF", extensions: &["wmf"], mime: "image/wmf", read: true, write: true, raster: false, options: metafile::OPTIONS },
     Format {
         id: "tga",
         label: "Targa",
@@ -460,9 +457,6 @@ pub const FORMATS: &[Format] = &[
         options: TGA_OPTIONS,
     },
     Format { id: "psd", label: "PSD", extensions: &["psd"], mime: "image/x-psd", read: true, write: true, raster: true, options: PSD_OPTIONS },
-    // Affinity Photo's `.afphoto` opens by its content but isn't listed: Finder shouldn't offer a
-    // vector app for a raster editor's documents.
-    reader("affinity", "Affinity", &["af", "afdesign", "afpub"], "application/x-affinity", false),
     // Photoshop's large document format: read like a PSD (its merged image), never written.
     reader("psb", "PSB", &["psb"], "image/x-psb", true),
     // PostScript programs, read as EPS files are; Print to PostScript writes them, exports don't.
@@ -493,15 +487,9 @@ pub const OPEN_EXTS: &[&str] = &[
     "psd",
     "psb",
     "vctemplate",
-    "dxf",
-    "emf",
-    "wmf",
     "eps",
     "epsf",
     "ps",
-    "af",
-    "afdesign",
-    "afpub",
 ];
 
 /// Extensions in [`OPEN_EXTS`] the packaging declares no type for: Photoshop documents belong to
@@ -558,15 +546,9 @@ pub const PLACE_EXTS: &[&str] = &[
     "psd",
     "psb",
     "vctemplate",
-    "dxf",
-    "emf",
-    "wmf",
     "eps",
     "epsf",
     "ps",
-    "af",
-    "afdesign",
-    "afpub",
     "txt",
     "rtf",
     "docx",

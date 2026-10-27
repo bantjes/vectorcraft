@@ -68,9 +68,6 @@ pub fn file_name(name: &str) -> String {
 /// extension of `name`.
 pub fn detect(name: &str, bytes: &[u8]) -> Option<&'static Format> {
     let by_name = format_for_name(name).filter(|f| f.read);
-    if vectorcraft_affinity::is_affinity(bytes) {
-        return format("affinity");
-    }
     if vectorcraft_format::sniff(bytes) {
         // A template keeps its meaning from the extension, like .ait.
         return by_name.filter(|f| f.id == "template").or_else(|| format("vectorcraft"));
@@ -87,12 +84,6 @@ pub fn detect(name: &str, bytes: &[u8]) -> Option<&'static Format> {
     if bytes.starts_with(b"%PDF") {
         // .ai and .ait files are PDF inside; the extension keeps the template meaning.
         return by_name.filter(|f| matches!(f.id, "ai" | "ait")).or_else(|| format("pdf"));
-    }
-    if vectorcraft_cad::is_dxf(bytes) {
-        return format("dxf");
-    }
-    if let Some(kind) = vectorcraft_metafile::sniff(bytes) {
-        return format(kind.id());
     }
     if psdread::is_psd(bytes) {
         return format(if psdread::is_psb(bytes) { "psb" } else { "psd" });
@@ -229,7 +220,7 @@ pub(crate) fn page_or_editing_data(
     }
 }
 
-/// [`load`] with `document.open` options (the PDF pages, box and password; the DXF options).
+/// [`load`] with `document.open` options (the PDF pages, box and password).
 pub fn load_with(name: &str, bytes: &[u8], opts: &LoadOptions) -> Result<Loaded> {
     let format = detect(name, bytes).ok_or_else(|| match super::unsupported(&super::extension(name)) {
         Some(u) => err(format!("can't open `{}`: {}", file_name(name), u.hint)),
@@ -237,7 +228,7 @@ pub fn load_with(name: &str, bytes: &[u8], opts: &LoadOptions) -> Result<Loaded>
     })?;
     let title = file_name(name);
     let mut converted = false;
-    let mut preview_only = false;
+    let preview_only = false;
     let mut editing_data = false;
     let (mut doc, mut warnings, restored) = match format.id {
         // EPS, .ps and PostScript .ai: the document our EPS files carry, else the PostScript read.
@@ -291,19 +282,6 @@ pub fn load_with(name: &str, bytes: &[u8], opts: &LoadOptions) -> Result<Loaded>
                 }
                 Err(e) => Err(e),
             })?
-        }
-        "dxf" => {
-            let (doc, warnings) = super::dxfimport::import(bytes, &opts.dxf)?;
-            (doc, warnings, false)
-        }
-        "emf" | "wmf" => {
-            let (doc, warnings) = super::metafile::import(bytes)?;
-            (doc, warnings, false)
-        }
-        "affinity" => {
-            let i = super::affinity::import(&title, bytes)?;
-            preview_only = i.preview_only;
-            (i.doc, i.warnings, false)
         }
         _ if format.raster => (raster_doc(&title, bytes)?, vec![], false),
         _ => return Err(err(format!("{} files can't be opened yet", format.label))),

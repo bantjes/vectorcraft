@@ -406,7 +406,7 @@ fn a_refused_export_keeps_the_dialog_open_with_background_export_on() {
     let (mut app, _, files) = app_with_worker(2, &Gate::default());
     open(&mut app);
     set(&mut app, "folder", json!(temp_folder("refused").to_string_lossy().replace('\\', "/")));
-    set(&mut app, "formats", json!([{"format": "dxf", "scale": "1x", "suffix": ""}]));
+    set(&mut app, "formats", json!([{"format": "txt", "scale": "1x", "suffix": ""}]));
     let e = confirm(&mut app).unwrap_err();
     assert!(e.contains("Export for Screens writes png"), "{e}");
     assert_eq!((kind(&app), app.ui.status.as_str()), (Some(export_for_screens::KIND), e.as_str()));

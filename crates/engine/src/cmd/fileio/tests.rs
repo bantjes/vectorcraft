@@ -413,10 +413,7 @@ fn export_extensions_name_every_writable_format() {
             "bmp",
             "vctemplate",
             "txt",
-            "dxf",
             "eps",
-            "emf",
-            "wmf",
             "tga",
             "psd"
         ]
@@ -448,10 +445,7 @@ fn formats_query_lists_readers_writers_and_options() {
             "template",
             "png8",
             "txt",
-            "dxf",
             "eps",
-            "emf",
-            "wmf",
             "tga",
             "psd"
         ]

@@ -485,7 +485,7 @@ fn making_and_restyling_type_reports_its_overflow() {
 }
 
 /// The formats whose exports draw type.
-const DRAWING_FORMATS: [&str; 8] = ["pdf", "eps", "svg", "png", "jpg", "tiff", "emf", "wmf"];
+const DRAWING_FORMATS: [&str; 6] = ["pdf", "eps", "svg", "png", "jpg", "tiff"];
 
 /// The warnings of `document.export {format, …options}` about type that doesn't fit its frame.
 fn export_overflow(s: &mut Session, format: &str, options: Value) -> Vec<String> {
@@ -536,7 +536,6 @@ fn exports_name_only_the_type_on_the_artboards_and_layers_they_draw() {
         ("eps", json!({"useArtboards": true, "range": "1"}), json!({"useArtboards": true, "range": "2"})),
         ("svg", json!({"range": "1"}), json!({"range": "2"})),
         ("png", json!({"artboard": 0}), json!({"artboard": 1})),
-        ("emf", json!({"artboard": 0}), json!({"artboard": 1})),
     ] {
         assert_eq!(export_overflow(&mut s, format, first), Vec::<String>::new(), "{format}");
         assert_eq!(export_overflow(&mut s, format, second).len(), 1, "{format}");

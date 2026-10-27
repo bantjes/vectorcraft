@@ -2,7 +2,7 @@
 //! save, export and serialize by path or bytes (base64), the format table, `command.batch` and
 //! `action.batch` (the Actions panel menu's Batch…).
 //!
-//! - `load`: `document.open` (native, legacy, SVG/SVGZ, PDF/.ai/.ait, DXF, raster images).
+//! - `load`: `document.open` (native, legacy, SVG/SVGZ, PDF/.ai/.ait, raster images).
 //! - `action_batch`: play an action on every file in a folder or every data set.
 //! - `encode`: one encoder per writable format, with typed options parsed from the params.
 //! - `svg`: the SVG Options (styling, fonts, images, object ids, artboards…).
@@ -13,19 +13,14 @@
 //!   per-format options (`file.formatOptions`); [`save_with`] is the one save path of every frontend.
 //! - `pdf`: PDF settings and presets for every PDF export, `document.exportPdf`.
 //! - `pdfimport`: the PDF pages, box and password `document.open` and Place read, `document.pdfInfo`.
-//! - `dxf`: DXF export options, `document.exportDxf`, and the formats that can't be written (DWG, PICT).
+//! - `unsupported`: the formats that can't be opened or written, and why (DWG, PICT, DXF, EMF, WMF, Affinity).
 //! - `eps`: EPS export options (flattened transparency, previews, the embedded document), `document.exportEps`.
-//! - `dxfimport`: the DXF options `document.open` and Place read, `document.dxfInfo`.
-//! - `metafile`: EMF and WMF export, open and place.
 //!
 //! [`FORMATS`] is the single list of formats (append-only); open dialogs use [`open_filters`],
 //! agents query `document.formats`.
 
 mod action_batch;
-mod affinity;
 mod batch;
-pub mod dxf;
-pub mod dxfimport;
 mod encode;
 pub mod eps;
 mod export;
@@ -33,7 +28,7 @@ pub(crate) mod imagemap;
 mod legacy_ai;
 mod load;
 pub(crate) use load::{MAX_RASTER_ALLOC, size_note};
-mod metafile;
+mod unsupported;
 mod naming;
 mod native;
 pub mod pdf;
@@ -51,7 +46,8 @@ pub mod zip;
 
 use serde_json::{Value, json};
 
-pub use dxf::{UNSUPPORTED, Unsupported, unsupported};
+pub use unsupported::{UNSUPPORTED, Unsupported, unsupported};
+pub(crate) use unsupported::text as unsupported_text;
 pub use encode::{ARTBOARD_PARAMS, ArtboardPick, Encoded, encode, encode_all, encode_with_warnings};
 pub(crate) use encode::{anti_alias, background, with_single_artboard};
 pub use export::export_source;
@@ -127,8 +123,6 @@ pub use formats::{
 #[cfg(test)]
 mod tests;
 #[cfg(test)]
-mod tests_affinity;
-#[cfg(test)]
 mod tests_pdf;
 #[cfg(test)]
 mod tests_pdfcolor;
@@ -162,8 +156,6 @@ mod tests_screens;
 #[cfg(test)]
 mod tests_text;
 
-#[cfg(test)]
-mod tests_dxf;
 
 #[cfg(test)]
 mod tests_pdfsecurity;
@@ -175,10 +167,6 @@ mod tests_svgimport;
 #[cfg(test)]
 mod tests_eps;
 
-#[cfg(test)]
-mod tests_dxfimport;
-#[cfg(test)]
-mod tests_metafile;
 
 #[cfg(test)]
 mod tests_pdfoutput;

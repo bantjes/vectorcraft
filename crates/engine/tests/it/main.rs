@@ -2,13 +2,6 @@
 // Unwrapping and panicking on failure is fine here, unlike in shipped code (AGENTS.md › Robustness).
 #![allow(clippy::unwrap_used, clippy::expect_used, clippy::panic)]
 
-#[path = "../support/affinity_docs.rs"]
-mod affinity_docs;
-#[path = "../../../affinity/tests/support/text_fixture.rs"]
-mod text_fixture;
-
-mod affinity_features;
-mod affinity_local;
 mod artboard_click;
 mod clear_commands;
 mod compound_attributes;

@@ -952,12 +952,6 @@ pub const UI_COMMANDS: &[(&str, &str, &str, &str)] = &[
         "{} close the export progress dialog; the exports go on, shown in the status bar → {hidden: n}",
     ),
     (
-        "ui.dxfOptionsDialog",
-        "DXF Options Dialog",
-        "",
-        "{path?, useArtboards?, range?, …document.exportDxf options} open DXF Options (dialog `dxfOptions`: fields = these options over the ones used last); OK checks them, remembers them and writes path (else asks). Export As… → DXF opens it too",
-    ),
-    (
         "links.editOriginal",
         "Edit Original",
         "",

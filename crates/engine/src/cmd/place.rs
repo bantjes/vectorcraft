@@ -4,10 +4,7 @@
 //! - A raster image becomes one image at 100% of its physical size: its pixels at the resolution
 //!   the file declares ([`fileio::ppi`]; 72 ppi when it declares none), linked to its file with
 //!   `link` ([`super::links`]).
-//! - An SVG becomes one group of its art; so does a DXF drawing, read with the DXF options
-//!   (`dxf`, [`fileio::dxfimport`]).
-//! - An EMF or WMF picture becomes one group, clipped to its frame (`crop: "crop"`) or bounded by
-//!   its art (`crop: "bounding"`).
+//! - An SVG becomes one group of its art.
 //! - An EPS file (or a PostScript .ai) becomes one group, clipped to its bounding box or bounded by
 //!   its art: the document an EPS file of ours carries, else what its PostScript draws, else its
 //!   preview ([`fileio::load`]).
@@ -63,7 +60,7 @@ pub fn specs() -> Vec<CommandSpec> {
             "Place…",
             ["File"],
             Some("Cmd+Shift+P"),
-            "{path | name | dataBase64 (a file's path, or its name with its bytes), link?: true (a raster image keeps its file's path; a VectorCraft document at path becomes one locked placed document showing artboard `page`, linked to the file and read again when it changes (links.update; saving it in this app updates it at once), drawn as vectors in every output; so does a PDF/.ai page at path, showing its `crop` box, unless password or textAs: \"outlines\" is given; false: an editable copy of its art, as from dataBase64; other files are embedded), text?: {characterSet?: \"unicode\" (UTF-8, or UTF-16 with a byte-order mark; other bytes as the platform's 8-bit set) | \"ansi\" (the platform's 8-bit set), platform?: \"windows\" (Windows-1252) | \"mac\" (Mac Roman), removeLineReturns?: false (each block of lines becomes one paragraph; blank lines end paragraphs), removeParagraphReturns?: false (drop blank lines), replaceSpaces?: n (runs of n ≥ 2 spaces become a tab)} (a .txt file, placed as area type filling rect, the replaced object's bounds, or else the artboard less a 36 pt margin), template?: false (onto a new locked template layer below the current layer), replace?: false (swap the one selected object, keeping its stacking place and transform; no at/rect), at?: [x, y] centre (default: the first artboard's centre), rect?: [x, y, width, height] fit inside; aspect kept (wins over at), page?: 1 (PDF/.ai page, or a native document's artboard), crop?: \"crop\" (clipped to that page or artboard, default; an SVG, only when given: framed and clipped by its viewBox, else by its art's bounds) | \"bounding\" (the bounds of the art that shows, with its strokes and effects, as an export measures them: hidden objects and guides left out) | \"art\" | \"trim\" | \"bleed\" | \"media\" (a PDF page's boxes), password? (an encrypted PDF), dxf?: {…the DXF options of document.open} (a .dxf drawing: fit fills the artboard under at, else the first; fitted or uncentred art lands with its drawing's artboard on that artboard, else it is centred on at)} → {ids, name, format, linked, width, height, warnings}. Raster images come in at 100% of their physical size (the file's ppi, else 72); SVG, DXF, PDF/.ai, EMF/WMF (clipped to the picture's frame), EPS (clipped to its bounding box; as document.open reads it), a .ai saved without PDF compatibility (from its editing data, as document.open reads it: the art of the layers that show on artboard `page`, clipped to that artboard unless crop is \"bounding\") and native documents as one group, with the images, symbols, patterns and swatches they use. One undo step; selects what it placed (unless on a template layer); never touches the clipboard",
+            "{path | name | dataBase64 (a file's path, or its name with its bytes), link?: true (a raster image keeps its file's path; a VectorCraft document at path becomes one locked placed document showing artboard `page`, linked to the file and read again when it changes (links.update; saving it in this app updates it at once), drawn as vectors in every output; so does a PDF/.ai page at path, showing its `crop` box, unless password or textAs: \"outlines\" is given; false: an editable copy of its art, as from dataBase64; other files are embedded), text?: {characterSet?: \"unicode\" (UTF-8, or UTF-16 with a byte-order mark; other bytes as the platform's 8-bit set) | \"ansi\" (the platform's 8-bit set), platform?: \"windows\" (Windows-1252) | \"mac\" (Mac Roman), removeLineReturns?: false (each block of lines becomes one paragraph; blank lines end paragraphs), removeParagraphReturns?: false (drop blank lines), replaceSpaces?: n (runs of n ≥ 2 spaces become a tab)} (a .txt file, placed as area type filling rect, the replaced object's bounds, or else the artboard less a 36 pt margin), template?: false (onto a new locked template layer below the current layer), replace?: false (swap the one selected object, keeping its stacking place and transform; no at/rect), at?: [x, y] centre (default: the first artboard's centre), rect?: [x, y, width, height] fit inside; aspect kept (wins over at), page?: 1 (PDF/.ai page, or a native document's artboard), crop?: \"crop\" (clipped to that page or artboard, default; an SVG, only when given: framed and clipped by its viewBox, else by its art's bounds) | \"bounding\" (the bounds of the art that shows, with its strokes and effects, as an export measures them: hidden objects and guides left out) | \"art\" | \"trim\" | \"bleed\" | \"media\" (a PDF page's boxes), password? (an encrypted PDF)} → {ids, name, format, linked, width, height, warnings}. Raster images come in at 100% of their physical size (the file's ppi, else 72); SVG, PDF/.ai, EPS (clipped to its bounding box; as document.open reads it), a .ai saved without PDF compatibility (from its editing data, as document.open reads it: the art of the layers that show on artboard `page`, clipped to that artboard unless crop is \"bounding\") and native documents as one group, with the images, symbols, patterns and swatches they use. One undo step; selects what it placed (unless on a template layer); never touches the clipboard",
             has_doc,
             place
         ),
@@ -72,7 +69,7 @@ pub fn specs() -> Vec<CommandSpec> {
             "Placed File Info",
             [],
             None,
-            "{path | name | dataBase64 (a file's path, or its name with its bytes), page?, crop?, password?, thumbnail?: px, link?: bool, dxf?: {…} (both as file.place)} what file.place would place, without placing it → {name, format, width, height (pt at 100%), pixelWidth?, pixelHeight?, ppi?: [x, y], colorMode?: RGB|Grayscale|CMYK (raster images), warnings, thumbnailBase64?: PNG of at most `thumbnail` (≤ 512) px on its longer side}",
+            "{path | name | dataBase64 (a file's path, or its name with its bytes), page?, crop?, password?, thumbnail?: px, link?: bool (as file.place)} what file.place would place, without placing it → {name, format, width, height (pt at 100%), pixelWidth?, pixelHeight?, ppi?: [x, y], colorMode?: RGB|Grayscale|CMYK (raster images), warnings, thumbnailBase64?: PNG of at most `thumbnail` (≤ 512) px on its longer side}",
             always,
             info
         ),
@@ -90,7 +87,7 @@ pub fn specs() -> Vec<CommandSpec> {
             "Load Place Cursor",
             [],
             None,
-            "{paths?: [path…], files?: [{name, dataBase64}…], link?, template?, page?, crop?, text?, dxf?, thumbnail?: px} load the place cursor (the `place` tool) with up to 100 files (as file.place reads them): a click places the current file at 100% with its top-left corner there, a drag places it at the dragged size (aspect kept), ←/→ and ↑/↓ cycle the files, Esc discards the current one; each placement is a file.place, and the previous tool returns after the last → {count, files: [{name, format, width, height, thumbnailBase64?}], skipped: [{name, error}]}",
+            "{paths?: [path…], files?: [{name, dataBase64}…], link?, template?, page?, crop?, text?, thumbnail?: px} load the place cursor (the `place` tool) with up to 100 files (as file.place reads them): a click places the current file at 100% with its top-left corner there, a drag places it at the dragged size (aspect kept), ←/→ and ↑/↓ cycle the files, Esc discards the current one; each placement is a file.place, and the previous tool returns after the last → {count, files: [{name, format, width, height, thumbnailBase64?}], skipped: [{name, error}]}",
             has_doc,
             queue
         ),
@@ -138,14 +135,12 @@ pub(crate) fn pt_per_px(ppi: Option<(f64, f64)>) -> (f64, f64) {
     (72.0 / x, 72.0 / y)
 }
 
-/// The file `p` names, read into placeable art; a DXF drawing's Fit to Artboard fills `board`
-/// (unless the params name their own box). A PDF/.ai page read from a path is placed linked with
+/// The file `p` names, read into placeable art. A PDF/.ai page read from a path is placed linked with
 /// Link when `link_pdf` (false for the queries, which read it embedded).
-fn load(p: &Value, cmd: &str, board: Option<Rect>, link_pdf: bool) -> Result<Loaded> {
+fn load(p: &Value, cmd: &str, _board: Option<Rect>, link_pdf: bool) -> Result<Loaded> {
     let src = fileio::source(p, cmd)?;
     let name = fileio::file_name(src.name);
-    // An Affinity file is recognised by its signature, whatever its name says.
-    if fileio::TEXT_EXTS.contains(&fileio::extension(src.name).as_str()) && !vectorcraft_affinity::is_affinity(&src.bytes) {
+    if fileio::TEXT_EXTS.contains(&fileio::extension(src.name).as_str()) {
         let text = text::import(&src.bytes, text::TextOptions::parse(p, cmd)?, cmd)?;
         if text.trim().is_empty() {
             return Err(bad(cmd, format!("`{name}` has no text to place")));
@@ -175,12 +170,7 @@ fn load(p: &Value, cmd: &str, board: Option<Rect>, link_pdf: bool) -> Result<Loa
         None => 1,
         Some(v) => v.as_u64().filter(|n| (1..=100_000).contains(n)).ok_or_else(|| bad(cmd, "page must be a whole number from 1"))? as usize,
     };
-    let mut opts = fileio::LoadOptions::from_params(cmd, p)?;
-    if let Some(b) = board
-        && p.get("dxf").and_then(|d| d.get("fitTo")).is_none()
-    {
-        opts.dxf.fit_to = (b.width(), b.height());
-    }
+    let opts = fileio::LoadOptions::from_params(cmd, p)?;
     // PostScript .ai files are read like EPS.
     let pdf = matches!(format.id, "pdf" | "ai" | "ait") && !vectorcraft_pdf::is_postscript(&src.bytes);
     if !pdf && !matches!(opts.crop, CropTo::Crop | CropTo::Bounding) {
@@ -226,30 +216,18 @@ fn load(p: &Value, cmd: &str, board: Option<Rect>, link_pdf: bool) -> Result<Loa
         let art = Art::Vector { src: Box::new(a.doc), nodes: a.nodes, clip: a.clip };
         return Ok(Loaded { name, format, art, natural: a.frame, warnings: a.warnings, link: None, board: None });
     }
-    let anchored = format.id == "dxf" && (opts.dxf.fit || !opts.dxf.center);
     let (mut doc, warnings) = {
-        // Of the open options, only a DXF drawing's apply (the colour mode stays the file's).
-        let o = fileio::LoadOptions { dxf: opts.dxf, ..Default::default() };
-        let mut l = fileio::load_with(src.name, &src.bytes, &o)?;
-        // An Affinity file whose native document couldn't be read is only its preview: it
-        // must never silently stand in for the art.
-        if l.preview_only {
-            return Err(bad(
-                cmd,
-                format!(
-                    "{name}: only this Affinity file's embedded preview could be read; use File › Open to see it with its warning, or export SVG or PDF from Affinity before placing"
-                ),
-            ));
-        }
+        // None of the open options apply here (the colour mode stays the file's).
+        let mut l = fileio::load_with(src.name, &src.bytes, &fileio::LoadOptions::default())?;
         // Linked images show their files, found from its folder.
         super::links::resolve(&mut l.doc, src.path, false, false);
         (l.doc, l.warnings)
     };
     doc.drop_edit_modes();
-    let board = doc.artboards.first().map(|a| a.rect).filter(|_| anchored);
+    let board: Option<Rect> = None;
     let layers = std::mem::take(&mut doc.layers);
     let symbols = doc.symbol_boxes();
-    let (nodes, clip) = if matches!(format.id, "svg" | "svgz" | "dxf") {
+    let (nodes, clip) = if matches!(format.id, "svg" | "svgz") {
         // An SVG with `crop: "crop"` asked for is framed and clipped by its viewBox (its artboard),
         // as a PDF by its page: art drawn on a shared canvas keeps its place and scale (#788). By
         // default, as Illustrator places one, it is its art's bounds.
@@ -714,7 +692,7 @@ fn read_queue(p: Value, queued: Vec<Value>) -> Result<QueueRead> {
     let thumbnail = p.get("thumbnail").and_then(Value::as_f64);
     let (mut entries, mut files, mut skipped) = (vec![], vec![], vec![]);
     for mut q in queued {
-        for k in ["link", "template", "page", "crop", "text", "dxf"] {
+        for k in ["link", "template", "page", "crop", "text"] {
             if let Some(v) = p.get(k) {
                 q[k] = v.clone();
             }

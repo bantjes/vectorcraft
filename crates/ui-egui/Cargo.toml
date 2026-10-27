@@ -35,7 +35,6 @@ vectorcraft-effects = { workspace = true }
 vectorcraft-three-d = { workspace = true }
 vectorcraft-plugins = { workspace = true }
 vectorcraft-pdf = { workspace = true }
-vectorcraft-cad = { workspace = true }
 vectorcraft-eps = { workspace = true }
 vectorcraft-format = { workspace = true }
 egui = { workspace = true, features = ["bytemuck", "default_fonts", "monochrome_emoji_fonts"] }

@@ -21,8 +21,6 @@ pub mod confirm;
 pub mod corners;
 pub mod dimension;
 mod document_setup;
-pub mod dxf_import;
-pub mod dxf_options;
 pub mod edit_selection;
 pub mod edit_views;
 mod effect;
@@ -331,7 +329,6 @@ registry! {
     SaveOptions: [save_options::KIND] => save_options::SPEC,
     TextExport: [text_export::KIND] => text_export::SPEC,
     OfficeExport: [office_export::KIND] => office_export::SPEC,
-    DxfOptions: [dxf_options::KIND] => dxf_options::SPEC,
     PlacementOptions: [placement_options::KIND] => placement_options::SPEC,
     Package: [package::KIND] => package::SPEC,
     ActionBatch: [action_batch::KIND] => action_batch::SPEC,
@@ -340,7 +337,6 @@ registry! {
     DivideSlices: [slices::DIVIDE] => slices::DIVIDE_SPEC,
     EpsOptions: [eps_options::KIND] => eps_options::SPEC,
     Recovery: [crate::recovery::KIND] => recovery::SPEC,
-    DxfImport: [dxf_import::KIND] => dxf_import::SPEC,
     RasterFormatOptions: ["tiffOptions", "bmpOptions", "tgaOptions"] => png_options::SPEC,
     SaveForWeb: [save_for_web::KIND] => save_for_web::SPEC,
     PsdOptions: ["psdOptions"] => png_options::SPEC,
@@ -661,7 +657,6 @@ mod tests_raster_formats;
 mod tests_svg_options_range;
 
 #[cfg(test)]
-mod tests_dxf;
 #[cfg(test)]
 mod tests_screen_assets;
 #[cfg(test)]
@@ -669,9 +664,6 @@ mod tests_screens;
 
 #[cfg(test)]
 mod tests_eps;
-
-#[cfg(test)]
-mod tests_metafile;
 
 #[cfg(test)]
 mod tests_tiff_bmp_tga;
