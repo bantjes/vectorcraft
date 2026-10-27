@@ -67,7 +67,6 @@ mod tools_float;
 pub mod touch;
 mod ui_fonts;
 pub mod unsaved;
-pub mod updates_ui;
 pub mod widgets;
 pub mod workspaces;
 
@@ -148,7 +147,6 @@ pub struct VectorcraftApp {
     ui_ctx: Option<egui::Context>,
     /// Installed fonts added to the UI's for characters its own fonts lack (CJK names…).
     ui_fonts: ui_fonts::UiFonts,
-    pub(crate) updates_rt: updates_ui::Runtime,
     /// The status bar's frame rate ([`frame_rate`]).
     frame_rate: frame_rate::FrameRate,
     /// Canvas rect of the last frame (screen points), for control-channel coordinate mapping.
