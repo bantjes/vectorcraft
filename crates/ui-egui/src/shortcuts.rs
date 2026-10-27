@@ -592,6 +592,7 @@ pub fn handle(app: &mut VectorcraftApp, ctx: &egui::Context) {
         // tools.
         let Some(hit) = hits.iter().find(|c| !c.id.starts_with("tool:")).or(hits.first()) else { continue };
         match hit.id.strip_prefix("tool:") {
+            Some(tool) if crate::closet::tool_hidden(&app.ui, tool) => put_away(app, tool),
             Some(tool) => app.select_tool(tool),
             None if hit.params.is_null() => {
                 let _ = app.run(&hit.id, json!({}));
@@ -624,7 +625,11 @@ fn dispatch(app: &mut VectorcraftApp, ctx: &egui::Context, accept: impl FnMut(&H
 /// Runs what a shortcut is bound to: a tool, a panel (`window.panel {panel}`) or a command.
 fn run_hit(app: &mut VectorcraftApp, ctx: &egui::Context, c: &CommandRef) {
     if let Some(tool) = c.id.strip_prefix("tool:") {
-        app.select_tool(tool);
+        if crate::closet::tool_hidden(&app.ui, tool) {
+            put_away(app, tool);
+        } else {
+            app.select_tool(tool);
+        }
     } else if c.id == "select.all" && crate::panels::artboards::selects_all(app, ctx) {
         // With the Artboard tool, Select All's keys after a click on an Artboards panel row select
         // every artboard instead of the art.
@@ -633,6 +638,13 @@ fn run_hit(app: &mut VectorcraftApp, ctx: &egui::Context, c: &CommandRef) {
         let p = if c.params.is_null() { json!({}) } else { c.params.clone() };
         crate::menus::invoke(app, &c.id, p);
     }
+}
+
+/// A put-away tool's key says where the tool is instead of picking it.
+fn put_away(app: &mut VectorcraftApp, tool: &str) {
+    let name = vectorcraft_tools::tool_info(tool).map_or(tool, |t| tl!(t.label));
+    let shelf = if crate::closet::shelf(&app.ui, &format!("tool:{tool}")) == crate::closet::Shelf::Basement { tl!("the Basement") } else { tl!("the Closet") };
+    app.ui.status = crate::i18n::fmt(tl!("{tool} is in {shelf} (Window › Closet)"), &[("tool", name), ("shelf", shelf)]);
 }
 
 /// Keys that type a character: letters, digits and punctuation (not Space).

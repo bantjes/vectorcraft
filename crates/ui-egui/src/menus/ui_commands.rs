@@ -406,6 +406,19 @@ pub const UI_COMMANDS: &[(&str, &str, &str, &str)] = &[
         "",
         "{} put the current (Basic or Advanced) toolbar back as it ships, undoing Edit Toolbar's changes; returns its slots",
     ),
+    (
+        "closet.set",
+        "Closet: Move",
+        "",
+        "{key: \"tool:<id>\"|\"panel:<id>\"|\"menu:<Menu › Submenu › Item>\", shelf: \"inUse\"|\"closet\"|\"basement\"} put a tool, panel or menu item in the Closet or the Basement (out of the toolbar, the dock or the menus) or back in use; saved with the preferences; see closet.list",
+    ),
+    (
+        "closet.reset",
+        "Closet: Reset",
+        "",
+        "{all?: bool} put everything back where this build starts it; with all, bring everything back into use; returns closet.list",
+    ),
+    ("closet.list", "Closet: List", "", "{shelf?: \"inUse\"|\"closet\"|\"basement\"} the keys on that shelf, or {closet, basement} without one"),
     ("window.taskBar", "Contextual Task Bar", "", "{}"),
     (
         "window.taskBar.pin",

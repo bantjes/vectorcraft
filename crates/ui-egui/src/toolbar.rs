@@ -32,23 +32,23 @@ const STRIP_BUTTON: egui::Vec2 = vec2(32.0, PITCH);
 
 /// The Basic toolbar: (category, slots); each slot is a flyout group (first = default).
 pub const BASIC: &[(&str, &[&[&str]])] = &[
-    ("Select", &[&["selection"], &["directSelection", "groupSelection"], &["lasso", "magicWand"]]),
+    // The Pen sits under the selection tools in this build.
+    ("Select", &[&["selection"], &["directSelection", "groupSelection"], &["pen", "addAnchor", "deleteAnchor", "anchorPoint"], &["lasso", "magicWand"]]),
     (
         "Shapes",
+        // Polygon and Shaper in the shapes' flyout.
         &[
-            &["rectangle", "roundedRectangle", "star", "lineSegment", "arc", "spiral", "rectangularGrid", "polarGrid", "flare"],
+            &["rectangle", "roundedRectangle", "polygon", "star", "lineSegment", "arc", "spiral", "rectangularGrid", "polarGrid", "flare", "shaper"],
             &["ellipse"],
-            &["polygon"],
-            &["shaper"],
         ],
     ),
     (
         "Draw",
+        // Scissors first, with Join beside it (Pencil's group goes in the Closet).
         &[
-            &["pencil", "smooth", "pathEraser", "join"],
-            &["eraser", "scissors", "knife", "mirrorCut", "lineCut", "rectCut"],
+            &["pencil", "smooth", "pathEraser"],
+            &["scissors", "join", "eraser", "knife", "mirrorCut", "lineCut", "rectCut"],
             &["paintbrush", "blobBrush"],
-            &["pen", "addAnchor", "deleteAnchor", "anchorPoint"],
             &["curvature"],
         ],
     ),
@@ -62,8 +62,8 @@ pub const BASIC: &[(&str, &[&[&str]])] = &[
         ],
     ),
     ("Type", &[&["areaType", "typeOnPath", "verticalAreaType", "verticalTypeOnPath"], &["type", "verticalType", "touchType"]]),
-    ("Navigate", &[&["zoom"], &["hand", "printTiling"], &["rotateView"]]),
-    ("Color", &[&["gradient", "mesh"], &["eyedropper", "measure"]]),
+    ("Navigate", &[&["zoom"], &["hand", "printTiling"], &["rotateView"], &["measure"]]),
+    ("Color", &[&["gradient", "mesh"], &["eyedropper"]]),
 ];
 
 pub(crate) fn tip(t: &ToolInfo) -> String {
@@ -73,9 +73,22 @@ pub(crate) fn tip(t: &ToolInfo) -> String {
     }
 }
 
-/// Slots of the current layout, as Edit Toolbar left it: (category label for the first slot of a
-/// category, tool ids).
+/// Slots of the current layout, as Edit Toolbar left it, without the tools put in the Closet or
+/// the Basement: (category label for the first slot of a category, tool ids).
 pub(crate) fn slots(app: &VectorcraftApp) -> Vec<(Option<&'static str>, Vec<&'static str>)> {
+    crate::closet::visible_slots(&app.ui, all_slots(app))
+}
+
+/// The number among [`all_slots`] of the shown slot numbered `k` (none past the last).
+pub(crate) fn shown_slot(app: &VectorcraftApp, k: u64) -> Option<u64> {
+    let all = all_slots(app);
+    let k = usize::try_from(k).ok()?;
+    let at = all.iter().enumerate().filter(|(_, (_, s))| s.iter().any(|t| !crate::closet::tool_hidden(&app.ui, t))).nth(k)?.0;
+    u64::try_from(at).ok()
+}
+
+/// [`slots`] with the tools put in the Closet or the Basement too.
+pub(crate) fn all_slots(app: &VectorcraftApp) -> Vec<(Option<&'static str>, Vec<&'static str>)> {
     if let Some(edited) = crate::edit_toolbar::edited_slots(app) {
         edited
     } else if app.ui.toolbar_advanced {

@@ -1016,6 +1016,21 @@ fn known(action: &Action<String>) -> bool {
     }
 }
 
+/// Close the panels put in the Closet or the Basement: a workspace, a reset or the default dock
+/// may hold them.
+fn put_away_panels(app: &mut VectorcraftApp) {
+    let layout = layout_of(&app.ui);
+    let away: Vec<&str> =
+        crate::state::all_panels().map(|(id, _)| id).filter(|id| crate::closet::panel_hidden(&app.ui, id) && layout.contains(&id.to_string())).collect();
+    if app.ui.open_panel.as_deref().is_some_and(|p| crate::closet::panel_hidden(&app.ui, p)) {
+        app.ui.open_panel = None;
+    }
+    for panel in away {
+        // One that can't close stays (the next frame tries again).
+        let _ = shared_command(app, "window.panel.close", &json!({ "panel": panel }));
+    }
+}
+
 /// Draw the canvas and the panels in the space left by the bars and the Tools panel, and apply
 /// what the user did to them.
 pub(crate) fn show(app: &mut VectorcraftApp, ui: &mut egui::Ui) {
@@ -1033,6 +1048,7 @@ pub(crate) fn show(app: &mut VectorcraftApp, ui: &mut egui::Ui) {
         app.ui.docking = None;
         app.status(tl!("Invalid panel layout; restored the default dock").to_string());
     }
+    put_away_panels(app);
     let mut layout = layout_of(&app.ui);
     // `open_panel` is the open flyout: a command or a workspace that sets it opens that flyout,
     // showing that panel of its group.

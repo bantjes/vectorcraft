@@ -153,7 +153,8 @@ fn the_commands_add_move_remove_and_reset_tools() {
     // Before the first slot, moved out of its group.
     app.run("toolbar.addTool", json!({"tool": "magicWand", "slot": 0})).unwrap();
     assert_eq!(&slots(&app)[..3], [&["magicWand"][..], &["selection"], &["directSelection", "groupSelection"]]);
-    assert_eq!(slots(&app)[3], ["lasso"]);
+    assert_eq!(slots(&app)[3], ["pen", "addAnchor", "deleteAnchor", "anchorPoint"]);
+    assert_eq!(slots(&app)[4], ["lasso"]);
     // After a slot, and into a group (last), moved out of the Rectangle group.
     app.run("toolbar.addTool", json!({"tool": "slice", "slot": 1, "place": "after"})).unwrap();
     assert_eq!(slots(&app)[2], ["slice"]);
@@ -207,7 +208,7 @@ fn the_commands_add_move_remove_and_reset_tools() {
     }
     assert!(slots(&app).is_empty());
     app.run("toolbar.addTool", json!({"tool": "pen"})).unwrap();
-    assert_eq!(crate::toolbar::slots(&app), [(Some("Draw"), vec!["pen"])]);
+    assert_eq!(crate::toolbar::slots(&app), [(Some("Select"), vec!["pen"])]);
 }
 
 #[test]
@@ -345,8 +346,9 @@ fn tools_drag_between_the_drawer_and_the_toolbar() {
     assert!(slot_of(&app, "artboard").is_none(), "{:?}", slots(&app));
     // Within the toolbar: Selection onto the divider over the Lasso.
     let tools = crate::toolbar::tests::widget_rects(&ctx, BUTTON);
-    drag(&mut app, &ctx, 5.0, tools[0].center(), tools[2].center_top() + vec2(0.0, 3.0));
-    assert_eq!(&slots(&app)[..3], [&["directSelection", "groupSelection"][..], &["selection"], &["lasso", "magicWand"]]);
+    drag(&mut app, &ctx, 5.0, tools[0].center(), tools[3].center_top() + vec2(0.0, 3.0));
+    let pen = &["pen", "addAnchor", "deleteAnchor", "anchorPoint"][..];
+    assert_eq!(&slots(&app)[..4], [&["directSelection", "groupSelection"][..], pen, &["selection"], &["lasso", "magicWand"]]);
     // The drawer closed, the toolbar is locked: the same drag moves nothing.
     app.run("window.editToolbar", json!({"open": false})).unwrap();
     frame(&mut app, &ctx, 6.0, vec![]);

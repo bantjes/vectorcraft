@@ -234,7 +234,12 @@ pub(crate) fn command(app: &mut VectorcraftApp, id: &str, p: &Value) -> Option<R
             let tool = tool_param(p)?;
             let place = Place::parse(p)?;
             let named = !app.ui.toolbar_advanced;
-            edit(app, |cats| add(cats, tool, p.get("slot"), place, named))
+            // `slot` counts the slots that show: the ones whose tools are all put away don't.
+            let slot = match p.get("slot").and_then(Value::as_u64) {
+                Some(k) => crate::toolbar::shown_slot(app, k).map(Value::from).or_else(|| p.get("slot").cloned()),
+                None => p.get("slot").cloned(),
+            };
+            edit(app, |cats| add(cats, tool, slot.as_ref(), place, named))
         })(),
         "toolbar.removeTool" => (|| {
             let tool = tool_param(p)?;
@@ -427,6 +432,7 @@ pub(crate) fn drawer(app: &mut VectorcraftApp, ctx: &egui::Context) {
     let mut reset = false;
     let mut advanced = None;
     let mut show_toggle = None;
+    let mut closet = false;
     let resp = egui::Area::new(id).order(egui::Order::Foreground).fixed_pos(pos2(x, y)).show(ctx, |ui| {
         crate::toolbar::flyout_frame(&t, removing).inner_margin(egui::Margin::same(8)).show(ui, |ui| {
             let width = WIDTH.min(screen.width() - 2.0 * GAP - 16.0).max(160.0);
@@ -461,14 +467,19 @@ pub(crate) fn drawer(app: &mut VectorcraftApp, ctx: &egui::Context) {
                 ui.spacing_mut().item_spacing = vec2(0.0, 0.0);
                 let inner = ui.available_width() - 10.0;
                 for (cat, gs) in groups() {
+                    // The tools put in the Closet or the Basement are listed there instead.
+                    let shown = |g: &&&'static [ToolInfo]| g.iter().any(|t| !crate::closet::tool_hidden(&app.ui, t.id));
+                    if !gs.iter().any(|g| shown(&g)) {
+                        continue;
+                    }
                     ui.add_space(6.0);
                     ui.label(egui::RichText::new(format!("{}:", tl!(cat))).size(12.0).color(t.text_strong));
                     ui.add_space(4.0);
-                    for g in gs {
+                    for g in gs.iter().filter(shown) {
                         // A flyout group: its tools framed together, as one toolbar button holds them.
                         egui::Frame::NONE.stroke(Stroke::new(1.0, t.divider)).corner_radius(2.0).show(ui, |ui| {
                             ui.set_width(inner);
-                            for tool in g.iter() {
+                            for tool in g.iter().filter(|t| !crate::closet::tool_hidden(&app.ui, t.id)) {
                                 if row(ui, &t, tool, tool.id == active, in_toolbar.contains(tool.id)) {
                                     picked = Some(tool.id);
                                 }
@@ -490,6 +501,10 @@ pub(crate) fn drawer(app: &mut VectorcraftApp, ctx: &egui::Context) {
                     }
                 }
             });
+            // The tools put away, and the way to bring them back.
+            if widgets::link_label(ui, "Closet…").clicked() {
+                closet = true;
+            }
         });
     });
     let rect = resp.response.rect;
@@ -515,6 +530,10 @@ pub(crate) fn drawer(app: &mut VectorcraftApp, ctx: &egui::Context) {
         && let Err(e) = app.run("toolbar.show", json!({ "control": name }))
     {
         app.ui.status = e;
+    }
+    if closet {
+        crate::closet::open(app);
+        app.ui.tools_drawer = false;
     }
     if let Some(id) = picked {
         app.select_tool(id);

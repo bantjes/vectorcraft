@@ -40,6 +40,15 @@ pub fn check_params(session: &vectorcraft_engine::Session, id: &str, params: &Va
 /// handles its own way (a Window menu panel item that toggles, …) → `None` to leave it to the
 /// engine.
 pub fn run_ui_command(app: &mut VectorcraftApp, id: &str, p: &Value) -> Option<Result<Value, String>> {
+    if id == "window.panel"
+        && let Some(panel) = p.get("panel").and_then(Value::as_str).and_then(normalize_panel)
+        && crate::closet::panel_hidden(&app.ui, panel)
+    {
+        return Some(Err(format!("{} is put away: bring it back from Window › Closet", tl!(crate::state::rail_panel(panel).map_or(panel, |p| p.1)))));
+    }
+    if let Some(r) = crate::closet::command(app, id, p) {
+        return Some(r);
+    }
     // The Window menu's panel items toggle like its other checked items (#2361); the panel's
     // other ways in (shortcuts, Show Properties Panel, a tool's double-click) only show it.
     if id == "window.panel" && p.get("toggle").and_then(Value::as_bool) == Some(true) && checked(app, id, p) == Some(true) {

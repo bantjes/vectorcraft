@@ -433,8 +433,8 @@ fn right_clicking_a_tool_group_opens_its_flyout() {
     app.run("file.new", json!({"width": 300, "height": 300})).unwrap();
     let ctx = egui::Context::default();
     let buttons = frame(&mut app, &ctx, 0.0, vec![]);
-    // Selection, Direct Selection, Lasso, then the Shapes group (Rectangle and its sub-tools).
-    let at = buttons[3].center();
+    // Selection, Direct Selection, Pen, Lasso, then the Shapes group (Rectangle and its sub-tools).
+    let at = buttons[4].center();
     let b = |pressed| Event::PointerButton { pos: at, button: PointerButton::Secondary, pressed, modifiers: Default::default() };
     frame(&mut app, &ctx, 1.0, vec![Event::PointerMoved(at), b(true)]);
     frame(&mut app, &ctx, 1.05, vec![b(false)]);
@@ -465,10 +465,10 @@ fn right_clicking_a_tool_group_opens_its_flyout() {
     assert_eq!((app.session.tool_id(), app.ui.flyout), ("roundedRectangle", None));
 }
 
-/// The Shapes group's button (Selection, Direct Selection, Lasso, then Rectangle).
+/// The Shapes group's button (Selection, Direct Selection, Pen, Lasso, then Rectangle).
 fn shapes_button(app: &mut VectorcraftApp, ctx: &egui::Context) -> egui::Rect {
     app.run("file.new", json!({"width": 300, "height": 300})).unwrap();
-    frame(app, ctx, 0.0, vec![])[3]
+    frame(app, ctx, 0.0, vec![])[4]
 }
 
 #[test]
@@ -649,6 +649,11 @@ fn the_tools_run_on_without_group_labels() {
     assert_eq!(rows.iter().sum::<usize>(), slots);
     assert!(rows[..rows.len() - 1].iter().all(|n| *n == 2), "{rows:?}");
     assert_eq!(rows.len(), slots.div_ceil(2));
+    // Every category has an even number of slots as this build ships: a slot fewer in Select and in
+    // Shapes makes the labels' rows show.
+    app.run("toolbar.removeTool", json!({"tool": "ellipse"})).unwrap();
+    app.run("toolbar.removeTool", json!({"tool": "lasso", "group": true})).unwrap();
+    let rows = row_sizes(&frame_in(&mut app, &ctx, 0.7, vec![], 1600.0));
     app.run("prefs.set", json!({"key": "toolGroupLabels", "value": true})).unwrap();
     let labelled = row_sizes(&frame_in(&mut app, &ctx, 1.0, vec![], 1600.0));
     assert!(labelled.len() > rows.len() && labelled.contains(&1), "{labelled:?}");
@@ -697,9 +702,9 @@ fn a_flyout_dragged_by_its_bar_floats_until_its_close_box_puts_it_back() {
     let [f] = app.ui.floating_flyouts.as_slice() else { panic!("one floating flyout: {:?}", app.ui.floating_flyouts) };
     assert_eq!(f.tools.first().map(String::as_str), Some("rectangle"));
     let float = ctx.memory(|m| m.area_rect(floating_area("rectangle"))).expect("the floating flyout is shown");
-    // A strip of its nine tools' buttons, its bar under the pointer.
+    // A strip of its eleven tools' buttons, its bar under the pointer.
     let drop = bar + vec2(60.0, 40.0);
-    assert!(float.height() < 40.0 && float.width() > 9.0 * STRIP_BUTTON.x, "a one-row strip: {float:?}");
+    assert!(float.height() < 40.0 && float.width() > 11.0 * STRIP_BUTTON.x, "a one-row strip: {float:?}");
     assert!((float.right() - 1.0 - BAR / 2.0 - drop.x).abs() < 1.0 && float.y_range().contains(drop.y), "its bar is under the pointer: {float:?}");
     // The same bar moves it.
     let bar = pos2(float.right() - 1.0 - BAR / 2.0, float.bottom() - 6.0);

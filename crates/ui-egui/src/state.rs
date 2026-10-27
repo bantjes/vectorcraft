@@ -195,6 +195,7 @@ pub const ICON_PANELS: &[(&str, &str, &str)] = &[
     (crate::panels::asset_export::ID, "Asset Export", "share-2"),
     (crate::panels::css_properties::ID, "CSS Properties", "globe"),
     (crate::panels::variables::ID, "Variables", "chart-column"),
+    (crate::closet::ID, "Closet", "shirt"),
 ];
 
 /// Groups of icon panels separated by dividers in the collapsed column.
@@ -359,6 +360,9 @@ pub struct UiState {
     /// The Basic and Advanced toolbars as Edit Toolbar left them (none: as they ship).
     #[serde(default)]
     pub toolbar_edits: ToolbarEdits,
+    /// What was put in the Closet or the Basement, or taken out, since this build's starting sort.
+    #[serde(default)]
+    pub closet: crate::closet::Closet,
     /// The controls under the toolbar's tools that the All Tools drawer's Show section shows
     /// (`toolbar.show`).
     #[serde(default)]
@@ -793,6 +797,7 @@ impl Default for UiState {
             slot_tool: Default::default(),
             floating_flyouts: vec![],
             toolbar_edits: ToolbarEdits::default(),
+            closet: Default::default(),
             toolbar_show: ToolbarShow::default(),
             tools_drawer: false,
             floating_panels: vec![],
