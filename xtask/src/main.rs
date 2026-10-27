@@ -112,12 +112,12 @@ fn run(mut cmd: Command, what: &str) -> Result<(), String> {
     if status.success() { Ok(()) } else { Err(format!("{what}: exited with {status}")) }
 }
 
-/// `vectorcraft-ui-egui` and `vectorcraft-mcp` without their default features leave
+/// `vectorcraft-ui-egui` without its default features leaves
 /// vectorcraft-text's bundled fonts out: no crate they depend on turns them on (docs/development.md
 /// › Leaving out the bundled fonts). The same tree with the default features must show them, so a
 /// change in cargo tree's output can't make the check pass by finding nothing.
 fn libraries_without_bundled_fonts() -> Result<(), String> {
-    ["vectorcraft-ui-egui", "vectorcraft-mcp"].into_iter().try_for_each(without_bundled_fonts)
+    without_bundled_fonts("vectorcraft-ui-egui")
 }
 
 /// `package` shows vectorcraft-text's `bundled-fonts` in its feature tree with its default features

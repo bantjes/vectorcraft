@@ -1,18 +1,11 @@
 //! VectorCraft desktop app.
 //!
-//! Usage: `vectorcraft [--control <port> [--automation-read-root <dir>]... [--automation-write-root <dir>]...]
-//! [--in-window-menus] [files…]`, `vectorcraft --version`, `vectorcraft --help` (or `-h`)
+//! Usage: `vectorcraft [--in-window-menus] [files…]`, `vectorcraft --version`, `vectorcraft --help` (or `-h`)
 //!
 //! `--in-window-menus` (or `VECTORCRAFT_IN_WINDOW_MENUS=1`) keeps the menus inside the window on
 //! macOS instead of the macOS menu bar (`mac_menu`).
 //!
-//! `--control <port>` (or `VECTORCRAFT_CONTROL_PORT`; a port from 1 to 65535, or the app doesn't
-//! start) starts a localhost JSON-lines control server:
-//! `{"id":1,"method":"ui.inspect","params":{}}` → `{"id":1,"ok":true,"result":…}`.
-//! See `vectorcraft_ui_egui::control` for the methods. `--automation-read-root` and
-//! `--automation-write-root` (or `VECTORCRAFT_AUTOMATION_READ_ROOT` / `_WRITE_ROOT`) confine the
-//! files its requests read and write (`vectorcraft_engine::file_access`); the person at the
-//! keyboard isn't confined.
+//! This build has no control server: nothing outside the app can drive it.
 #![cfg_attr(all(target_os = "windows", not(debug_assertions)), windows_subsystem = "windows")]
 
 #[cfg(all(feature = "windows7", any(feature = "wgpu", feature = "accessibility")))]
@@ -22,11 +15,9 @@ compile_error!("windows7 requires --target x86_64-win7-windows-msvc; the ordinar
 #[cfg(all(target_vendor = "win7", not(feature = "windows7")))]
 compile_error!("the win7 target requires --no-default-features --features windows7");
 
-mod automation_args;
 mod clipboard;
 #[cfg(feature = "wgpu")]
 mod compositor_gpu;
-mod control_server;
 mod cursor_theme;
 #[cfg(feature = "wgpu")]
 mod gpu;
@@ -60,7 +51,7 @@ mod xwayland;
 
 use vectorcraft_engine::Session;
 use vectorcraft_engine::cmd::fileio;
-use vectorcraft_engine::file_access::{self, AutomationRoots};
+use vectorcraft_engine::file_access;
 use vectorcraft_ui_egui::graphics::GraphicsLoss;
 use vectorcraft_ui_egui::picks::PickRequest;
 use vectorcraft_ui_egui::{ClipboardProbeFactory, FilePick, Services, VectorcraftApp};
@@ -108,26 +99,17 @@ struct App {
     maximize_tries: u8,
 }
 
-/// `vectorcraft --help`. Headless work (convert, run, MCP) is `vectorcraft-cli`'s.
+/// `vectorcraft --help`.
 const USAGE: &str = "\
 Usage: vectorcraft [options] [files…]
 
 Opens the VectorCraft desktop app with the given files.
 
 Options:
-  --control <port>               Start the localhost JSON-lines control server on <port>
-                                 (or VECTORCRAFT_CONTROL_PORT)
-  --automation-read-root <dir>   Confine the files control requests read to <dir>
-                                 (may be given more than once)
-  --automation-write-root <dir>  Confine the files control requests write to <dir>
-                                 (may be given more than once)
   --in-window-menus              Keep the menus inside the window on macOS
                                  (or VECTORCRAFT_IN_WINDOW_MENUS=1)
   --version                      Print the version and exit
   -h, --help                     Print this help and exit
-
-Without a window (converting, scripting, the MCP server), use vectorcraft-cli:
-  vectorcraft-cli --help
 ";
 
 fn main() -> std::process::ExitCode {
@@ -139,24 +121,9 @@ fn main() -> std::process::ExitCode {
     // Before any thread starts: the pointer must find a cursor theme on Wayland (#2450).
     #[cfg(target_os = "linux")]
     cursor_theme::apply();
-    // Validate roots before logging, font scans, preferences or the window: a missing value
-    // must not clear an environment root and start the control channel without confinement.
-    let mut control = automation_args::ControlArg::default();
-    let root_env = |name: &str| std::env::var_os(name).filter(|v| !v.is_empty()).map(std::path::PathBuf::from);
-    let mut roots_args =
-        automation_args::AutomationArgs::new(root_env("VECTORCRAFT_AUTOMATION_READ_ROOT"), root_env("VECTORCRAFT_AUTOMATION_WRITE_ROOT"));
     let mut files = Vec::new();
     let mut in_window_menus = std::env::var_os("VECTORCRAFT_IN_WINDOW_MENUS").is_some_and(|v| !v.is_empty() && v != "0");
-    let mut args = std::env::args().skip(1);
-    while let Some(a) = args.next() {
-        match roots_args.consume(&a, &mut args).and_then(|root| if root { Ok(true) } else { control.consume(&a, &mut args) }) {
-            Ok(true) => continue,
-            Ok(false) => {}
-            Err(e) => {
-                eprintln!("vectorcraft: {e}");
-                return std::process::ExitCode::FAILURE;
-            }
-        }
+    for a in std::env::args().skip(1) {
         match a.as_str() {
             "--in-window-menus" => in_window_menus = true,
             "--version" => {
@@ -174,18 +141,6 @@ fn main() -> std::process::ExitCode {
             _ => files.push(a),
         }
     }
-    let automation_args::AutomationArgs { read_roots, write_roots, .. } = roots_args;
-    // After the arguments: `--control` and `--version` win over a bad environment value.
-    let control_port = match control.port {
-        Some(port) => Some(port),
-        None => match automation_args::env_control_port(std::env::var_os("VECTORCRAFT_CONTROL_PORT")) {
-            Ok(port) => port,
-            Err(e) => {
-                eprintln!("vectorcraft: {e}");
-                return std::process::ExitCode::FAILURE;
-            }
-        },
-    };
     // Before desktop services, so every start-up warning is recorded (`logging`).
     let logger = logging::install();
     vectorcraft_ui_egui::i18n::detect_system_lang_in_background();
@@ -210,25 +165,6 @@ fn main() -> std::process::ExitCode {
             None => logger.no_file(),
         }
     }
-    // The roots confine the control channel: a bad one keeps the app from starting rather than
-    // leaving agents unconfined. Without a control port there is nothing to confine.
-    let roots = if control_port.is_none() {
-        if !read_roots.is_empty() || !write_roots.is_empty() {
-            log::warn!("--automation-read-root and --automation-write-root confine the control channel: ignored without --control");
-        }
-        None
-    } else {
-        let read: Vec<&std::path::Path> = read_roots.iter().map(std::path::PathBuf::as_path).collect();
-        let write: Vec<&std::path::Path> = write_roots.iter().map(std::path::PathBuf::as_path).collect();
-        match AutomationRoots::new(&read, &write) {
-            Ok(roots) => roots,
-            Err(e) => {
-                log::error!("{e}");
-                eprintln!("vectorcraft: {e}");
-                return std::process::ExitCode::FAILURE;
-            }
-        }
-    };
     let saved = read_prefs();
     let saved_window = saved.as_ref().and_then(|ui| ui.window);
     #[cfg(feature = "wgpu")]
@@ -441,16 +377,6 @@ fn main() -> std::process::ExitCode {
                     app.graphics_adapter = Some("OpenGL (Windows 7 compatibility)".into());
                 }
                 app.custom_titlebar = custom_titlebar;
-                if let Some(port) = control_port {
-                    let rx = control_server::start(port, cc.egui_ctx.clone());
-                    app = app.with_control(rx).with_automation_roots(roots.clone());
-                    if let Some(roots) = &roots {
-                        // Everywhere the app doesn't say whose work it is (worker threads), the
-                        // roots hold: unconfined is only what the person at the keyboard does.
-                        file_access::confine_process(roots.clone());
-                        log::info!("control channel confined to the automation roots: {}", roots.describe());
-                    }
-                }
                 #[cfg(target_os = "macos")]
                 {
                     open_documents::set_ui(&cc.egui_ctx);

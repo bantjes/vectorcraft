@@ -1,7 +1,7 @@
 [workspace]
 resolver = "3"
 members = ["crates/*", "apps/*", "xtask"]
-default-members = ["crates/*", "apps/vectorcraft", "apps/vectorcraft-cli", "xtask"]
+default-members = ["crates/*", "apps/vectorcraft", "xtask"]
 
 [workspace.package]
 version = "0.17.0"
@@ -42,7 +42,6 @@ vectorcraft-tools = { path = "crates/tools" }
 # them, so an embedder can build without them (docs/development.md › Leaving out the bundled fonts).
 vectorcraft-engine = { path = "crates/engine", default-features = false }
 vectorcraft-ui-egui = { path = "crates/ui-egui" }
-vectorcraft-mcp = { path = "crates/mcp" }
 vectorcraft-testkit = { path = "crates/testkit" }
 vectorcraft-cad = { path = "crates/cad" }
 vectorcraft-eps = { path = "crates/eps" }

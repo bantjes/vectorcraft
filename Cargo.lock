@@ -6115,28 +6115,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "vectorcraft-cli"
-version = "0.17.0"
-dependencies = [
- "log",
- "objc2-core-foundation",
- "objc2-core-text",
- "serde_json",
- "vectorcraft-color",
- "vectorcraft-doc",
- "vectorcraft-engine",
- "vectorcraft-format",
- "vectorcraft-geom",
- "vectorcraft-mcp",
- "vectorcraft-render",
- "vectorcraft-svg",
- "vectorcraft-testkit",
- "vectorcraft-text",
- "windows",
- "winsafe",
-]
-
-[[package]]
 name = "vectorcraft-color"
 version = "0.17.0"
 dependencies = [
@@ -6271,25 +6249,6 @@ dependencies = [
  "serde_json",
  "thiserror 2.0.21",
  "vectorcraft-testkit",
-]
-
-[[package]]
-name = "vectorcraft-mcp"
-version = "0.17.0"
-dependencies = [
- "image",
- "log",
- "proptest",
- "serde_json",
- "socket2",
- "vectorcraft-doc",
- "vectorcraft-engine",
- "vectorcraft-format",
- "vectorcraft-geom",
- "vectorcraft-render",
- "vectorcraft-svg",
- "vectorcraft-testkit",
- "vectorcraft-tools",
 ]
 
 [[package]]

@@ -7,7 +7,7 @@ use std::process::Command;
 pub fn run(root: &Path) -> Result<(), String> {
     let status = Command::new(std::env::var("CARGO").unwrap_or_else(|_| "cargo".into()))
         .current_dir(root)
-        .args(["build", "--release", "-p", "vectorcraft", "-p", "vectorcraft-cli"])
+        .args(["build", "--release", "-p", "vectorcraft"])
         .status()
         .map_err(|e| e.to_string())?;
     if !status.success() {
@@ -19,7 +19,6 @@ pub fn run(root: &Path) -> Result<(), String> {
     std::fs::create_dir_all(app.join("MacOS")).map_err(|e| e.to_string())?;
     std::fs::create_dir_all(app.join("Resources")).map_err(|e| e.to_string())?;
     std::fs::copy(target.join("release/vectorcraft"), app.join("MacOS/VectorCraft")).map_err(|e| format!("copy app: {e}"))?;
-    std::fs::copy(target.join("release/vectorcraft-cli"), app.join("MacOS/vectorcraft-cli")).map_err(|e| format!("copy cli: {e}"))?;
     std::fs::copy(root.join("assets/app-icon/vectorcraft.icns"), app.join("Resources/VectorCraft.icns")).map_err(|e| format!("copy icon: {e}"))?;
     let sha = std::env::var("VECTORCRAFT_BUILD_SHA").unwrap_or_else(|_| "unknown".into());
     std::fs::write(app.join("Info.plist"), info_plist(env!("CARGO_PKG_VERSION"), &sha)).map_err(|e| e.to_string())?;
