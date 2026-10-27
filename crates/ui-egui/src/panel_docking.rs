@@ -1194,6 +1194,8 @@ const DOCK_LABELS: &[(&str, &str)] = &[
 fn floating_size(panel: &str) -> egui::Vec2 {
     match panel {
         "properties" | "layers" | "libraries" => egui::vec2(300.0, 420.0),
+        // Room for a tool's name beside its two buttons, and a good part of the list.
+        crate::closet::ID => egui::vec2(440.0, 560.0),
         _ => egui::vec2(260.0, 360.0),
     }
 }
