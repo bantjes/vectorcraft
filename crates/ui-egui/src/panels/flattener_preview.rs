@@ -19,13 +19,28 @@ use vectorcraft_engine::cmd::flatten::{FlattenReport, Highlight, Overprints};
 use vectorcraft_geom::{Affine, Point, Rect as DRect};
 use vectorcraft_render::RenderOptions;
 
-use super::navigator::{doc_to_thumb, thumb_to_doc};
 use crate::dialogs::flatten::{options_editor, preset_dropdown};
 use crate::theme::Tokens;
 use crate::{VectorcraftApp, widgets};
 
 /// The panel id (Window → Flattener Preview).
 pub const ID: &str = "flattenerPreview";
+
+/// Map a document point into the thumbnail rect (region → rect, aspect preserved).
+pub fn doc_to_thumb(region: DRect, thumb: Rect, p: Point) -> egui::Pos2 {
+    let s = (thumb.width() as f64 / region.width()).min(thumb.height() as f64 / region.height());
+    let ox = thumb.left() as f64 + (thumb.width() as f64 - region.width() * s) / 2.0;
+    let oy = thumb.top() as f64 + (thumb.height() as f64 - region.height() * s) / 2.0;
+    pos2((ox + (p.x - region.x0) * s) as f32, (oy + (p.y - region.y0) * s) as f32)
+}
+
+/// Inverse of [`doc_to_thumb`].
+pub fn thumb_to_doc(region: DRect, thumb: Rect, p: egui::Pos2) -> Point {
+    let s = (thumb.width() as f64 / region.width()).min(thumb.height() as f64 / region.height());
+    let ox = thumb.left() as f64 + (thumb.width() as f64 - region.width() * s) / 2.0;
+    let oy = thumb.top() as f64 + (thumb.height() as f64 - region.height() * s) / 2.0;
+    Point::new(region.x0 + (p.x as f64 - ox) / s, region.y0 + (p.y as f64 - oy) / s)
+}
 
 /// The panel's settings (kept with the UI state).
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]

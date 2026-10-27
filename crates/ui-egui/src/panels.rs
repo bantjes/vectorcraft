@@ -29,7 +29,6 @@ pub mod library_panel;
 pub mod links;
 pub mod magic_wand;
 pub(crate) mod memo;
-pub mod navigator;
 pub mod opentype;
 pub mod paragraph;
 pub mod pathfinder;
@@ -159,7 +158,6 @@ pub fn show_icon_panel(app: &mut VectorcraftApp, ui: &mut Ui, id: &str) {
         "character" => character::show(app, ui),
         "paragraph" => paragraph::show(app, ui),
         "glyphs" => glyphs::show(app, ui),
-        "navigator" => navigator::show(app, ui),
         "brushes" => brushes::show(app, ui),
         "symbols" => symbols::show(app, ui),
         "patternOptions" => pattern_options::show(app, ui),
@@ -206,7 +204,6 @@ pub fn panel_menu_items(app: &mut VectorcraftApp, ui: &mut Ui, id: &str) -> bool
         "character" => character::menu(app, ui),
         "paragraph" => paragraph::menu(app, ui),
         "glyphs" => glyphs::menu(app, ui),
-        "navigator" => navigator::menu(app, ui),
         "brushes" => brushes::menu(app, ui),
         "symbols" => symbols::menu(app, ui),
         "patternOptions" => pattern_options::menu(app, ui),

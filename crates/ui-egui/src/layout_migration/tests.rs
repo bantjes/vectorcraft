@@ -212,7 +212,7 @@ fn untrusted_legacy_fields_convert_without_failing() {
         "docking": {"root": {"Tabs": {"panels": ["properties", "properties", "nosuch"], "active": 9}}, "floating": [
             {"panels": ["brushes"], "active": 0, "rect": [0.0, 0.0, 0.0, 0.0]},
             {"panels": ["info"], "active": 0, "rect": [1e39, 1e39, 1e39, 1e39]},
-            {"panels": ["navigator"], "active": 0, "rect": [-5.0, 2e6, -1.0, 1e7]},
+            {"panels": ["glyphs"], "active": 0, "rect": [-5.0, 2e6, -1.0, 1e7]},
         ]},
     }))
     .ui;

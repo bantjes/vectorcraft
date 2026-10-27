@@ -1,4 +1,4 @@
-//! Panel thumbnails (the Navigator's view of the document, the Layers and Links rows) rendered
+//! Panel thumbnails (the Layers and Links rows) rendered
 //! off the UI thread on native builds, so a heavy document never stalls a frame. The panels keep
 //! showing their last image until the new one is back, and leave thumbnails alone while the user
 //! drags (every pointer move makes a new document revision): they update once the drag ends and
@@ -32,8 +32,8 @@ struct Job<S, K> {
     run: JobFn,
 }
 
-/// A render thread for one panel's thumbnails. Jobs go in by slot (the Navigator has one, the
-/// Layers panel one per row): a job not started yet is replaced by a newer one for its slot, so
+/// A render thread for one panel's thumbnails. Jobs go in by slot (the Layers panel has one per
+/// row): a job not started yet is replaced by a newer one for its slot, so
 /// only the latest image of anything is drawn.
 pub struct ThumbWorker<S, K> {
     tx: Sender<Job<S, K>>,

@@ -185,7 +185,6 @@ pub const ICON_PANELS: &[(&str, &str, &str)] = &[
     ("actions", "Actions", "dc-actions"),
     ("info", "Info", "info"),
     ("docInfo", "Document Info", "dc-list-view"),
-    ("navigator", "Navigator", "map"),
     ("separations", "Separations Preview", "printer"),
     ("magicWand", "Magic Wand", "wand-sparkles"),
     (crate::panels::flattener_preview::ID, "Flattener Preview", "eye"),
@@ -211,7 +210,7 @@ pub const ICON_PANEL_GROUPS: &[&[&str]] = &[
     &["artboards"],
     &["transform", "align", "pathfinder"],
     &["character", "paragraph", "glyphs"],
-    &["history", "actions", "info", "navigator"],
+    &["history", "actions", "info"],
     &["variables"],
 ];
 
