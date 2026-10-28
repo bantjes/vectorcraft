@@ -58,10 +58,11 @@ pub struct Closet {
 
 use Shelf::{Basement, Closet as InCloset};
 
-/// The sort this build starts with (Emma's list of 27 October 2026).
+/// The sort this build starts with (Emma's lists of 27 and 28 October 2026).
 pub const SHIPPED: &[(&str, Shelf)] = &[
     // Panels.
     ("panel:symbols", InCloset),
+    ("panel:libraries", InCloset),
     ("panel:artboards", InCloset),
     ("panel:actions", InCloset),
     ("panel:brushes", Basement),
@@ -423,12 +424,16 @@ pub fn show(app: &mut VectorcraftApp, ui: &mut Ui) {
         crate::panels::set_pstate(ui.ctx(), "closet-tab", i);
     }
     let tab = TABS.get(tab).copied().unwrap_or("Closet");
-    let blurb = match tab {
-        "Closet" => "Put away, one click from coming back.",
-        "Basement" => "Things you'll probably never need. Nothing here is deleted.",
-        _ => "Everything that can be put away. Pick where each one lives.",
+    let (icon, blurb) = match tab {
+        "Closet" => ("dc-closet", "Put away, one click from coming back."),
+        "Basement" => ("dc-basement", "Things you'll probably never need. Nothing here is deleted."),
+        _ => ("dc-closet", "Everything that can be put away. Pick where each one lives."),
     };
-    ui.label(egui::RichText::new(tl!(blurb)).size(11.5).color(t.text_dim));
+    ui.horizontal(|ui| {
+        let (r, _) = ui.allocate_exact_size(egui::vec2(18.0, 18.0), egui::Sense::hover());
+        icons::paint(ui, icon, r, t.text_dim);
+        ui.label(egui::RichText::new(tl!(blurb)).size(11.5).color(t.text_dim));
+    });
     ui.add_space(4.0);
     let query = widgets::search_field(ui, egui::Id::unique("closet-search"), "Search");
     let query = query.trim().to_lowercase();
