@@ -19,6 +19,15 @@ pub fn specs() -> Vec<CommandSpec> {
             rectangle
         ),
         cmd!("shape.ellipse", "Ellipse", [], None, "{x, y, width, height, rotation?: deg (about centre)} → {id}", has_doc, ellipse),
+        cmd!(
+            "shape.triangle",
+            "Triangle",
+            [],
+            None,
+            "{x, y, width, height, rotation?: deg (about centre)} → {id} (point at the top middle, base along the bottom)",
+            has_doc,
+            triangle
+        ),
         cmd!("shape.polygon", "Polygon", [], None, "{cx, cy, radius, sides=6, rotation?: deg} → {id}", has_doc, polygon),
         cmd!("shape.star", "Star", [], None, "{cx, cy, radius1, radius2, points=5, rotation?: deg} → {id}", has_doc, star),
         cmd!(
@@ -348,6 +357,16 @@ fn count_or(p: &Value, key: &str, default: u64, cmd: &str) -> Result<u64> {
     } else {
         Err(bad(cmd, format!("`{key}` must be a whole number of at least 0, not {n}")))
     }
+}
+
+/// Marian Vectorcraft's Triangle tool: the triangle filling box `{x, y, width, height}`, its point
+/// at the top middle and its base along the bottom.
+fn triangle(s: &mut Session, p: &Value) -> Result<Value> {
+    let r = rect_of(p, "shape.triangle")?;
+    let xf = rect_transform(r, p, "shape.triangle")?;
+    let (w, h) = (r.width(), r.height());
+    let pts = [Point::new(w / 2.0, 0.0), Point::new(w, h), Point::new(0.0, h)].map(|q| xf * q);
+    add_art_turned(s, "Triangle", path_kind(PathData::single(SubPath::polyline(&pts, true)), None), f64_or(p, "rotation", 0.0))
 }
 
 fn polygon(s: &mut Session, p: &Value) -> Result<Value> {

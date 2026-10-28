@@ -449,6 +449,16 @@ fn outline_stroke_of_line() {
 }
 
 #[test]
+fn outline_stroke_with_fill_makes_group_only_when_asked_to_keep_fills() {
+    let mut s = session();
+    rect(&mut s, 0.0, 0.0, 100.0, 100.0);
+    let r = ids(&s.execute("object.path.outlineStroke", &json!({})).unwrap());
+    let n = node(&s, r[0]);
+    assert!(!matches!(n.kind, vectorcraft_doc::NodeKind::Group { .. }), "only the outline is left: {n:?}");
+    assert_eq!(n.appearance.fill_paint(), Paint::solid(Color::BLACK));
+}
+
+#[test]
 fn outline_stroke_with_fill_makes_group() {
     let mut s = session();
     let a = rect(&mut s, 0.0, 0.0, 100.0, 100.0);
@@ -457,7 +467,7 @@ fn outline_stroke_with_fill_makes_group() {
         Ok(())
     })
     .unwrap();
-    let r = ids(&s.execute("object.path.outlineStroke", &json!({})).unwrap());
+    let r = ids(&s.execute("object.path.outlineStroke", &json!({ "keepFills": true })).unwrap());
     let g = node(&s, r[0]);
     let ch = g.children().unwrap();
     assert_eq!(ch.len(), 2);

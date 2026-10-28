@@ -37,9 +37,9 @@
     <string>zh-Hant</string>
   </array>
   <key>CFBundleDisplayName</key>
-  <string>VectorCraft Emma</string>
+  <string>Marian Vectorcraft</string>
   <key>CFBundleName</key>
-  <string>VectorCraft Emma</string>
+  <string>Marian Vectorcraft</string>
   <key>CFBundleExecutable</key>
   <string>VectorCraft</string>
   <key>CFBundleIdentifier</key>

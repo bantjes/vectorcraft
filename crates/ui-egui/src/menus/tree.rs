@@ -217,6 +217,7 @@ pub fn menu_tree_named(english_names: bool) -> Vec<(&'static str, Vec<Item>)> {
                         Sep,
                         c("Simplify…", "object.path.simplify"),
                         c("Add Anchor Points", "object.path.addAnchorPoints"),
+                        c("Nodes at Extrema", "object.path.nodesAtExtrema"),
                         c("Remove Anchor Points", "path.removeAnchors"),
                         c("Divide Objects Below", "object.path.divideObjectsBelow"),
                         c("Split Into Grid…", "object.path.splitIntoGrid"),

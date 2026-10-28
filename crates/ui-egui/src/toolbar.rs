@@ -32,7 +32,7 @@ const STRIP_BUTTON: egui::Vec2 = vec2(32.0, PITCH);
 
 /// The Basic toolbar: (category, slots); each slot is a flyout group (first = default).
 pub const BASIC: &[(&str, &[&[&str]])] = &[
-    // The Pen sits under the selection tools in this build.
+    // The Pen sits under the selection tools in this build; Dimension shares Measure's flyout.
     ("Select", &[&["selection"], &["directSelection", "groupSelection"], &["pen", "addAnchor", "deleteAnchor", "anchorPoint"], &["lasso", "magicWand"]]),
     (
         "Shapes",
@@ -40,6 +40,7 @@ pub const BASIC: &[(&str, &[&[&str]])] = &[
         &[
             &["rectangle", "roundedRectangle", "polygon", "star", "lineSegment", "arc", "spiral", "rectangularGrid", "polarGrid", "flare", "shaper"],
             &["ellipse"],
+            &["triangle"],
         ],
     ),
     (
@@ -58,11 +59,10 @@ pub const BASIC: &[(&str, &[&[&str]])] = &[
             &["width", "warp", "twirl", "pucker", "bloat", "scallop", "crystallize", "wrinkle"],
             &["rotate", "reflect", "scale", "shear", "reshape", "freeTransform", "puppetWarp"],
             &["shapeBuilder", "livePaintBucket", "livePaintSelection", "blend"],
-            &["dimension"],
         ],
     ),
     ("Type", &[&["areaType", "typeOnPath", "verticalAreaType", "verticalTypeOnPath"], &["type", "verticalType", "touchType"]]),
-    ("Navigate", &[&["zoom"], &["hand", "printTiling"], &["rotateView"], &["measure"]]),
+    ("Navigate", &[&["zoom"], &["hand", "printTiling"], &["rotateView"], &["measure", "dimension"]]),
     ("Color", &[&["gradient", "mesh"], &["eyedropper"]]),
 ];
 
@@ -98,6 +98,18 @@ pub(crate) fn all_slots(app: &VectorcraftApp) -> Vec<(Option<&'static str>, Vec<
     }
 }
 
+/// The toolbar's colours: the theme's, made golden while User Interface › Golden Toolbar is on.
+pub fn tokens(app: &VectorcraftApp, ctx: &egui::Context) -> Tokens {
+    let t = Tokens::get(ctx);
+    if app.session.prefs.golden_toolbar { t.golden() } else { t }
+}
+
+/// The tool a slot shows when the active tool isn't in it: the one last used there, unless it has
+/// been put away since (then the slot's first tool).
+pub(crate) fn remembered(app: &VectorcraftApp, slot: &[&'static str]) -> String {
+    app.ui.slot_tool.get(slot[0]).filter(|t| slot.contains(&t.as_str())).cloned().unwrap_or_else(|| slot[0].to_string())
+}
+
 /// Remember the tool shown in the slot that contains `id`.
 pub fn remember(app: &mut VectorcraftApp, id: &str) {
     for (_, s) in slots(app) {
@@ -108,7 +120,7 @@ pub fn remember(app: &mut VectorcraftApp, id: &str) {
 }
 
 pub fn show(app: &mut VectorcraftApp, ui: &mut Ui) {
-    let t = Tokens::get(ui.ctx());
+    let t = tokens(app, ui.ctx());
     // The user's choice alone: a window too short for the tools scrolls them.
     let cols = if app.ui.toolbar_double { 2 } else { 1 };
     // Two 36 pt buttons with 2 pt either side inside the border and separator line (at 76 they
@@ -151,7 +163,7 @@ pub fn show(app: &mut VectorcraftApp, ui: &mut Ui) {
 
 /// The Tools panel's contents, docked or floating at `floating`.
 fn body(app: &mut VectorcraftApp, ui: &mut Ui, cols: usize, floating: Option<egui::Pos2>) {
-    let t = Tokens::get(ui.ctx());
+    let t = tokens(app, ui.ctx());
     let all = slots(app);
     let bounds = ui.max_rect();
     // The drawer opens beside it; a click in it leaves the drawer open.
@@ -196,6 +208,7 @@ fn body(app: &mut VectorcraftApp, ui: &mut Ui, cols: usize, floating: Option<egu
         // While Edit Toolbar's drawer is open, the tools drag (to new places or into the drawer)
         // instead of opening their flyouts.
         let editing = app.ui.tools_drawer;
+        let closet_open = crate::closet::panel_shown(ui.ctx());
         let mut buttons: Vec<(usize, egui::Rect)> = vec![];
         let mut open_flyout: Option<(Vec<&'static str>, egui::Rect)> = None;
         // A group torn off into a floating flyout is raised instead of opening its flyout.
@@ -229,11 +242,7 @@ fn body(app: &mut VectorcraftApp, ui: &mut Ui, cols: usize, floating: Option<egu
                 ui.add_space((bounds.center().x - cols as f32 * 18.0 - ui.cursor().min.x).max(0.0));
                 for &k in &row {
                     let slot = &all[k].1;
-                    let shown_id = if slot.contains(&active) {
-                        active.to_string()
-                    } else {
-                        app.ui.slot_tool.get(slot[0]).cloned().unwrap_or_else(|| slot[0].to_string())
-                    };
+                    let shown_id = if slot.contains(&active) { active.to_string() } else { remembered(app, slot) };
                     let Some(shown) = tool_info(&shown_id).or_else(|| tool_info(slot[0])) else { continue };
                     let is_active = slot.contains(&active);
                     let (rect, resp) = ui.allocate_exact_size(vec2(36.0, PITCH - 1.0), Sense::click_and_drag());
@@ -251,6 +260,9 @@ fn body(app: &mut VectorcraftApp, ui: &mut Ui, cols: usize, floating: Option<egu
                     }
                     if editing {
                         buttons.push((k, rect));
+                    }
+                    // A tool drags into Edit Toolbar's drawer, or onto the Closet panel's shelves.
+                    if editing || closet_open {
                         resp.dnd_set_drag_payload(crate::edit_toolbar::ToolDrag { tool: shown.id, from_toolbar: true });
                     }
                     let press = if slot.len() > 1 && !editing { flyout_press(ui, &resp, rect) } else { None };
@@ -543,6 +555,10 @@ fn bottom_controls(app: &mut VectorcraftApp, ui: &mut Ui, t: &Tokens, cols: usiz
         if show.screen_mode && widgets::icon_button(ui, "dc-screen-mode", "Change Screen Mode (F)", false, 26.0).clicked() {
             app.run("view.screenMode", json!({})).ok();
         }
+        // The Closet's door: its panel, where tools dragged from the toolbar are put away.
+        if widgets::icon_button(ui, "dc-closet", "Closet", false, 26.0).clicked() {
+            crate::closet::open(app);
+        }
         // Edit Toolbar: the All Tools drawer opens beside the toolbar, by this button.
         let edit = widgets::icon_button(ui, "ellipsis", "Edit Toolbar", app.ui.tools_drawer, 26.0);
         ui.data_mut(|d| d.insert_temp(crate::edit_toolbar::button_id(), edit.rect));
@@ -763,7 +779,7 @@ fn flyout(app: &mut VectorcraftApp, ctx: &egui::Context) {
     }
     let anchor: egui::Rect =
         ctx.data(|d| d.get_temp(egui::Id::unique("flyout-anchor"))).unwrap_or(egui::Rect::from_min_size(pos2(40.0, 100.0), vec2(32.0, 32.0)));
-    let t = Tokens::get(ctx);
+    let t = tokens(app, ctx);
     let active = app.session.tool_id();
     let mut input = FlyoutInput::default();
     let resp = egui::Area::new(egui::Id::unique("tool-flyout")).order(egui::Order::Foreground).fixed_pos(anchor.right_top() + vec2(8.0, -1.0)).show(
@@ -805,7 +821,7 @@ fn floating(app: &mut VectorcraftApp, ctx: &egui::Context) {
     if app.ui.floating_flyouts.is_empty() {
         return;
     }
-    let t = Tokens::get(ctx);
+    let t = tokens(app, ctx);
     let screen = ctx.content_rect();
     let now = ctx.input(|i| i.time);
     let active = app.session.tool_id();

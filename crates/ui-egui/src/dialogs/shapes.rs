@@ -34,6 +34,7 @@ fn title(d: &Dialog) -> &'static str {
         "rectangle" => tl!("Rectangle"),
         "roundedRectangle" => tl!("Rounded Rectangle"),
         "ellipse" => tl!("Ellipse"),
+        "triangle" => tl!("Triangle"),
         "polygon" => tl!("Polygon"),
         "star" => tl!("Star"),
         "spiral" => tl!("Spiral"),
@@ -283,6 +284,7 @@ fn confirm(app: &mut VectorcraftApp, d: &Dialog) -> Result<Value, String> {
     let (bx, by) = box_origin(d);
     let (id, params) = match d.kind.as_str() {
         "ellipse" => ("shape.ellipse", json!({"x": bx, "y": by, "width": d.f64("width", 100.0), "height": d.f64("height", 100.0)})),
+        "triangle" => ("shape.triangle", json!({"x": bx, "y": by, "width": d.f64("width", 100.0), "height": d.f64("height", 100.0)})),
         "polygon" => ("shape.polygon", json!({"cx": x, "cy": y, "radius": d.f64("radius", 50.0), "sides": d.f64("sides", 6.0) as u64})),
         "star" => (
             "shape.star",

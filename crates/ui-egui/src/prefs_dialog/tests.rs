@@ -372,3 +372,24 @@ fn hyphenation_exceptions_dialog_ok_reaches_the_hyphenator() {
     assert!(vectorcraft_text::hyphen::hyphen_points("typography").is_empty());
     assert_eq!(vectorcraft_text::hyphen::hyphen_points("happen"), vec![3]);
 }
+
+/// Marian Vectorcraft starts golden: fresh settings, and settings copied over from VectorCraft
+/// (which have no Golden Toolbar), take the Golden scheme and toolbar; a choice made since stands.
+#[test]
+fn the_golden_look_is_the_default_and_carried_onto_old_settings() {
+    for engine_prefs in [Value::Null, json!({"uiColorScheme": "modern", "goldenToolbar": false})] {
+        let mut app = VectorcraftApp::new(Session::new(), Default::default());
+        app.ui.engine_prefs = engine_prefs.clone();
+        restore(&mut app);
+        let golden = engine_prefs.is_null();
+        assert_eq!(app.session.prefs.ui_color_scheme == "golden", golden, "{engine_prefs}");
+        assert_eq!(app.session.prefs.golden_toolbar, golden, "{engine_prefs}");
+        let ctx = egui::Context::default();
+        apply_runtime(&mut app, &ctx);
+        assert_eq!(Tokens::get(&ctx).app_bar == Tokens::for_brightness(app.ui.brightness).golden_frame().app_bar, golden);
+    }
+    let mut app = VectorcraftApp::new(Session::new(), Default::default());
+    app.ui.engine_prefs = json!({"uiColorScheme": "classic", "uiBrightness": "light"});
+    restore(&mut app);
+    assert_eq!((app.session.prefs.ui_color_scheme.as_str(), app.session.prefs.golden_toolbar), ("golden", true));
+}

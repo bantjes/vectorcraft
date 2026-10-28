@@ -129,6 +129,9 @@ pub struct Prefs {
     /// User Interface › Show Tool Group Labels: the toolbar's group names (Select, Shapes, Draw…);
     /// off (as it ships, #1736), the tools run on from group to group with nothing between them.
     pub tool_group_labels: bool,
+    /// User Interface › Golden Toolbar: the toolbar in golden yellow with black icons and the
+    /// current tool on green (Marian Vectorcraft's look; off, it takes the theme's colours).
+    pub golden_toolbar: bool,
     pub open_documents_as_tabs: bool,
     pub large_tabs: bool,
     pub ui_scaling: f64,
@@ -380,10 +383,11 @@ impl Default for Prefs {
             scratch_secondary: s("None"),
             ui_brightness: s("mediumDark"),
             ui_accent: s("coral"),
-            ui_color_scheme: s("modern"),
+            ui_color_scheme: s("golden"),
             canvas_color: s("matchUi"),
             auto_collapse_icon_panels: false,
             tool_group_labels: false,
+            golden_toolbar: true,
             open_documents_as_tabs: true,
             large_tabs: false,
             ui_scaling: 1.0,

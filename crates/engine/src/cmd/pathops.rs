@@ -131,7 +131,7 @@ pub fn specs() -> Vec<CommandSpec> {
             "Outline Stroke",
             ["Object", "Path"],
             None,
-            "{} replace stroked paths with filled outlines → {ids}",
+            "{keepFills?: bool (keep the fill on a copy of the path, as Expand does; off, only the outlines are left)} replace stroked paths with filled outlines → {ids}",
             has_selection,
             outline_stroke
         ),
@@ -154,6 +154,7 @@ pub fn specs() -> Vec<CommandSpec> {
             simplify
         ),
         cmd!("object.path.addAnchorPoints", "Add Anchor Points", ["Object", "Path"], None, "{} → {ids}", has_selection, add_anchor_points),
+        cmd!("object.path.nodesAtExtrema", "Nodes at Extrema", ["Object", "Path"], None, "{} → {ids}", has_selection, nodes_at_extrema),
         cmd!(
             "object.path.divideObjectsBelow",
             "Divide Objects Below",
@@ -837,6 +838,12 @@ pub(crate) fn outlined_stroke(
 /// the path, each stroke becomes its outline (or brush art), grouped when there are several.
 /// `None` when `l` has no stroke to outline.
 pub(crate) fn outline_strokes(d: &mut Document, brushes: &[vectorcraft_brush::Brush], l: &Node) -> Option<Node> {
+    outline_strokes_keeping(d, brushes, l, true)
+}
+
+/// [`outline_strokes`], keeping the fills on copies of the path only with `keep_fills`: Object ›
+/// Path › Outline Stroke leaves just the outlines (Marian Vectorcraft drops the middle copy).
+fn outline_strokes_keeping(d: &mut Document, brushes: &[vectorcraft_brush::Brush], l: &Node, keep_fills: bool) -> Option<Node> {
     if !l.appearance.items.iter().any(|i| matches!(i, AppearanceItem::Stroke(st) if outlinable(st))) {
         return None;
     }
@@ -845,7 +852,7 @@ pub(crate) fn outline_strokes(d: &mut Document, brushes: &[vectorcraft_brush::Br
     let mut fills: Vec<AppearanceItem> = vec![];
     for item in &l.appearance.items {
         match item {
-            AppearanceItem::Fill(f) if f.visible && !f.paint.is_none() => fills.push(item.clone()),
+            AppearanceItem::Fill(f) if keep_fills && f.visible && !f.paint.is_none() => fills.push(item.clone()),
             AppearanceItem::Stroke(st) if outlinable(st) => {
                 if !fills.is_empty() {
                     parts.push(styled_copy(d, l, std::mem::take(&mut fills)));
@@ -916,14 +923,17 @@ pub(crate) fn replace_leaves(d: &mut Document, root: NodeId, mut f: impl FnMut(&
     Ok((replacement, changed))
 }
 
-fn outline_stroke(s: &mut Session, _: &Value) -> Result<Value> {
+fn outline_stroke(s: &mut Session, p: &Value) -> Result<Value> {
     let roots = selected_roots(s)?;
+    // Object › Path › Outline Stroke leaves just the outline; Expand keeps the fill beside it.
+    let keep_fills = p.get("keepFills").and_then(Value::as_bool).unwrap_or(false);
     let ids = s.edit("Outline Stroke", |d, sel| {
         let brushes = vectorcraft_brush::library(d);
         let mut new_sel = vec![];
         let mut changed = 0;
         for root in &roots {
-            let (id, n) = outline_strokes_under(d, &brushes, *root)?;
+            let (id, n) =
+                replace_leaves(d, *root, |d, l| if matches!(l.kind, NodeKind::Text(_)) { None } else { outline_strokes_keeping(d, &brushes, l, keep_fills) })?;
             new_sel.push(id);
             changed += n;
         }
@@ -1086,6 +1096,13 @@ fn simplify(s: &mut Session, p: &Value) -> Result<Value> {
 
 fn add_anchor_points(s: &mut Session, _: &Value) -> Result<Value> {
     let (ids, before, after) = edit_paths(s, "Add Anchor Points", |path, _, _| (po::add_anchor_points(path), None))?;
+    Ok(json!({ "ids": ids.iter().map(|i| i.0).collect::<Vec<_>>(), "before": before, "after": after }))
+}
+
+/// Anchors at every horizontal and vertical extreme, the old in-between ones dropped where the
+/// shape doesn't move (FontLab's "nodes at extremes").
+fn nodes_at_extrema(s: &mut Session, _: &Value) -> Result<Value> {
+    let (ids, before, after) = edit_paths(s, "Nodes at Extrema", |path, _, _| (po::nodes_at_extrema(path), None))?;
     Ok(json!({ "ids": ids.iter().map(|i| i.0).collect::<Vec<_>>(), "before": before, "after": after }))
 }
 

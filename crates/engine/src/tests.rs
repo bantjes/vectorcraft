@@ -94,6 +94,7 @@ mod objexpand;
 mod opacitymask;
 mod outlineobject;
 pub(super) mod outlinestroke;
+mod extrema_cmd;
 mod overprint;
 mod package;
 mod paintproxy;

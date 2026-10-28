@@ -384,6 +384,7 @@ impl VectorcraftApp {
         self.adopt_context(ctx);
         if !self.styled {
             theme::apply(ctx, self.ui.brightness);
+            prefs_dialog::reapply(ctx);
             egui_extras::install_image_loaders(ctx);
             self.styled = true;
         }

@@ -84,8 +84,9 @@ fn inside_alignment_keeps_the_outline_inside_the_path() {
     let mut s = session();
     s.execute("shape.rectangle", &json!({"x": 0, "y": 0, "width": 100, "height": 100})).unwrap();
     s.execute("stroke.set", &json!({"weight": 4, "align": "inside"})).unwrap();
-    let g = outline(&mut s);
-    let ring = &g.children().unwrap()[1];
+    // Only the outline is left (Marian Vectorcraft drops the filled copy of the path).
+    let ring = &outline(&mut s);
+    assert!(!matches!(ring.kind, NodeKind::Group { .. }), "no group: {ring:?}");
     assert!(close(ring.geometric_bounds().unwrap(), Rect::new(0.0, 0.0, 100.0, 100.0), 0.01));
     assert!(near(area(ring), 100.0 * 100.0 - 92.0 * 92.0, 1.0), "{}", area(ring));
 }
@@ -110,12 +111,11 @@ fn every_stroke_is_outlined_in_paint_order() {
     s.execute("appearance.setItem", &json!({"index": 2, "weight": 10, "color": "#ff0000"})).unwrap();
     let g = outline(&mut s);
     let ch = g.children().unwrap();
-    assert_eq!(ch.len(), 3, "the fill, then both outlines");
-    assert!(ch[0].appearance.items.iter().all(AppearanceItem::is_fill));
-    assert!(close(ch[0].geometric_bounds().unwrap(), Rect::new(0.0, 0.0, 100.0, 100.0), 1e-9));
-    assert!(close(ch[1].geometric_bounds().unwrap(), Rect::new(-0.5, -0.5, 100.5, 100.5), 0.01));
-    assert!(close(ch[2].geometric_bounds().unwrap(), Rect::new(-5.0, -5.0, 105.0, 105.0), 0.01));
-    assert_eq!(ch[2].appearance.fill().unwrap().paint.color().unwrap().to_hex(), "#ff0000");
+    // Both outlines, without the filled copy of the path in the middle.
+    assert_eq!(ch.len(), 2, "both outlines, no fill copy");
+    assert!(close(ch[0].geometric_bounds().unwrap(), Rect::new(-0.5, -0.5, 100.5, 100.5), 0.01));
+    assert!(close(ch[1].geometric_bounds().unwrap(), Rect::new(-5.0, -5.0, 105.0, 105.0), 0.01));
+    assert_eq!(ch[1].appearance.fill().unwrap().paint.color().unwrap().to_hex(), "#ff0000");
     // One undo step restores the stroked rectangle.
     s.execute("edit.undo", &json!({})).unwrap();
     let d = &s.doc().unwrap().doc;

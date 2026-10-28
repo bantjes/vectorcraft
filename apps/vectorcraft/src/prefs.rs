@@ -1,7 +1,7 @@
 use super::*;
 
-/// Where UI preferences live: ~/Library/Application Support/VectorCraft Emma (macOS),
-/// %APPDATA%\VectorCraft Emma (Windows), $XDG_CONFIG_HOME or ~/.config/vectorcraft-emma (Linux).
+/// Where UI preferences live: ~/Library/Application Support/Marian Vectorcraft (macOS),
+/// %APPDATA%\Marian Vectorcraft (Windows), $XDG_CONFIG_HOME or ~/.config/marian-vectorcraft (Linux).
 pub(crate) fn prefs_path() -> Option<std::path::PathBuf> {
     prefs_dir::prefs_path_for("VectorCraft", "vectorcraft")
 }

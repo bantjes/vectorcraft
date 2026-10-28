@@ -63,7 +63,7 @@ pub(super) fn length_value(d: &Dialog, key: &str, unit: Unit, range: std::ops::R
 fn lengths(kind: &str) -> &'static [&'static str] {
     match kind {
         "move" => &["dx", "dy", "distance"],
-        "rectangle" | "ellipse" | "rectangularGrid" | "polarGrid" | "artboardOptions" => &["width", "height"],
+        "rectangle" | "ellipse" | "triangle" | "rectangularGrid" | "polarGrid" | "artboardOptions" => &["width", "height"],
         "roundedRectangle" => &["width", "height", "radius"],
         "polygon" | "spiral" => &["radius"],
         "star" => &["radius1", "radius2"],

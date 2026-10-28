@@ -465,7 +465,7 @@ fn an_outlined_stroke_leaves_dither_behind() {
             fills.push(g.gradient.dither);
         }
     });
-    assert_eq!(fills, [false, false], "the fill and the outline, neither dithered");
+    assert_eq!(fills, [false], "the outline (the filled copy is dropped), not dithered");
 }
 
 /// The Gradient panel's Method (Illustrator 30): `method` set and cleared through the gradient

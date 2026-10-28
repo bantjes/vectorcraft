@@ -231,7 +231,7 @@ fn expand(s: &mut Session, p: &Value) -> Result<Value> {
         let _ = run_raw(s, "type.createOutlines", &json!({}));
     }
     if stroke && e.stroke {
-        let _ = run_raw(s, "object.path.outlineStroke", &json!({}));
+        let _ = run_raw(s, "object.path.outlineStroke", &json!({ "keepFills": true }));
     }
     if fill {
         let _ = expand_gradient_fills(s, to);

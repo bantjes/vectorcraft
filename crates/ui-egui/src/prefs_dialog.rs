@@ -76,6 +76,12 @@ pub fn restore(app: &mut VectorcraftApp) {
     }
     // 0.5.0 saved its default, `powerSaving`, which Automatic replaced (#502): any value this
     // version doesn't offer reads as the default, as the desktop app reads it at startup.
+    // Settings from before Marian Vectorcraft (no Golden Toolbar in them, as copied over from
+    // VectorCraft) take on its golden look once; after that the user's choice stands.
+    if app.ui.engine_prefs.is_object() && app.ui.engine_prefs.get("goldenToolbar").is_none() {
+        p.ui_color_scheme = "golden".into();
+        p.golden_toolbar = true;
+    }
     if !GPU_PREFERENCES.iter().any(|(v, _)| *v == p.gpu_preference) {
         p.gpu_preference = Prefs::default().gpu_preference;
     }
@@ -107,6 +113,16 @@ fn canvas_color(key: &str) -> Option<egui::Color32> {
     }
 }
 
+fn applied_id() -> egui::Id {
+    egui::Id::unique("dc-applied-prefs")
+}
+
+/// Have the next [`apply_runtime`] push the preferences again, after something put the plain
+/// theme back (the first frame's setup): the colour scheme and accent are then the user's.
+pub(crate) fn reapply(ctx: &egui::Context) {
+    ctx.data_mut(|d| d.remove::<Option<Applied>>(applied_id()));
+}
+
 /// Per frame: push UI-side preferences into egui / the renderer when they change.
 pub fn apply_runtime(app: &mut VectorcraftApp, ctx: &egui::Context) {
     let p = &app.session.prefs;
@@ -125,7 +141,7 @@ pub fn apply_runtime(app: &mut VectorcraftApp, ctx: &egui::Context) {
         scrub: p.scrub_numeric_fields,
         bare_points: p.numbers_without_units_are_points,
     };
-    let id = egui::Id::unique("dc-applied-prefs");
+    let id = applied_id();
     let prev: Option<Applied> = ctx.data(|d| d.get_temp::<Option<Applied>>(id)).flatten();
     if prev != Some(want) {
         theme::apply_with(ctx, want.brightness, want.accent, want.scheme);

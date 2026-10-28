@@ -65,8 +65,8 @@ fn outline_stroke_of_fitted_dashes_wraps_every_corner() {
     let (mut s, id) = session_with_rect();
     set(&mut s, json!({"weight": 2, "dash": [12, 6], "alignDashes": true}));
     s.execute("select.set", &json!({"ids": [id.0]})).unwrap();
-    // The fill, then the outlined dashes.
-    let ring = path_of(&outline(&mut s).children().unwrap()[1]);
+    // Only the outlined dashes (the filled copy of the path is dropped).
+    let ring = path_of(&outline(&mut s));
     let bp = ring.to_bezpath();
     // 5 + 2 + 5 + 2 dashes inside the sides and one wrapped round each corner.
     assert_eq!(ring.subpaths.len(), 18);

@@ -71,6 +71,9 @@ pub const SHIPPED: &[(&str, Shelf)] = &[
     ("panel:variables", Basement),
     // Shapes, drawing and cutting.
     ("tool:arc", InCloset),
+    ("tool:polygon", InCloset),
+    ("tool:star", InCloset),
+    ("tool:flare", InCloset),
     ("tool:pencil", InCloset),
     ("tool:smooth", InCloset),
     ("tool:pathEraser", InCloset),
@@ -101,7 +104,6 @@ pub const SHIPPED: &[(&str, Shelf)] = &[
     ("tool:shapeBuilder", Basement),
     ("tool:livePaintBucket", Basement),
     ("tool:livePaintSelection", Basement),
-    ("tool:dimension", Basement),
     ("tool:mesh", Basement),
     // The Photoshop-style raster effects.
     ("menu:Effect › Effect Gallery…", InCloset),
@@ -435,6 +437,14 @@ pub fn show(app: &mut VectorcraftApp, ui: &mut Ui) {
         ui.label(egui::RichText::new(tl!(blurb)).size(11.5).color(t.text_dim));
     });
     ui.add_space(4.0);
+    let frame = ui.ctx().cumulative_frame_nr();
+    ui.ctx().data_mut(|d| d.insert_temp(shown_id(), frame));
+    if let Some((tool, to)) = drop_shelves(ui, &t) {
+        if let Err(e) = app.run("closet.set", json!({ "key": format!("tool:{tool}"), "shelf": to.name() })) {
+            app.ui.status = e;
+        }
+    }
+    ui.add_space(4.0);
     let query = widgets::search_field(ui, egui::Id::unique("closet-search"), "Search");
     let query = query.trim().to_lowercase();
     ui.add_space(4.0);
@@ -504,6 +514,37 @@ pub fn menu(app: &mut VectorcraftApp, ui: &mut Ui) {
     if widgets::menu_item(ui, tl!("Bring Everything Back"), true, false) {
         app.run("closet.reset", json!({ "all": true })).ok();
     }
+}
+
+fn shown_id() -> egui::Id {
+    egui::Id::new("closet-panel-shown")
+}
+
+/// True while the Closet panel is showing (drawn this frame or the last): the toolbar's tools then
+/// drag onto its shelves.
+pub fn panel_shown(ctx: &egui::Context) -> bool {
+    let now = ctx.cumulative_frame_nr();
+    ctx.data(|d| d.get_temp::<u64>(shown_id())).is_some_and(|f| now.saturating_sub(f) <= 1)
+}
+
+/// The two drop shelves, Closet and Basement: → the tool dropped on one, and where it goes.
+fn drop_shelves(ui: &mut Ui, t: &Tokens) -> Option<(&'static str, Shelf)> {
+    let mut dropped = None;
+    ui.horizontal(|ui| {
+        let w = ((ui.available_width() - 6.0) / 2.0).max(60.0);
+        for (label, icon, to) in [("Drop a tool: Closet", "dc-closet", Shelf::Closet), ("Drop a tool: Basement", "dc-basement", Shelf::Basement)] {
+            let (r, resp) = ui.allocate_exact_size(egui::vec2(w, 30.0), egui::Sense::hover());
+            let hovering = resp.dnd_hover_payload::<crate::edit_toolbar::ToolDrag>().is_some();
+            let stroke = egui::Stroke::new(if hovering { 2.0 } else { 1.0 }, if hovering { t.accent } else { t.border });
+            ui.painter().rect(r, egui::CornerRadius::same(6), if hovering { t.hover } else { t.panel_darker }, stroke, egui::StrokeKind::Inside);
+            icons::paint(ui, icon, egui::Rect::from_center_size(r.left_center() + egui::vec2(16.0, 0.0), egui::vec2(16.0, 16.0)), t.text_dim);
+            ui.painter().text(r.left_center() + egui::vec2(30.0, 0.0), egui::Align2::LEFT_CENTER, tl!(label), egui::FontId::proportional(11.5), t.text_dim);
+            if let Some(drag) = resp.dnd_release_payload::<crate::edit_toolbar::ToolDrag>() {
+                dropped = Some((drag.tool, to));
+            }
+        }
+    });
+    dropped
 }
 
 /// Opens the Closet panel.

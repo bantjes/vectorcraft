@@ -1,4 +1,4 @@
-//! Shape tools: Rectangle, Rounded Rectangle, Ellipse, Polygon, Star, Line Segment.
+//! Shape tools: Rectangle, Rounded Rectangle, Ellipse, Triangle, Polygon, Star, Line Segment.
 //!
 //! Drag draws (Shift constrains to square/circle/45°, Alt draws from the centre, Space held moves
 //! the shape being drawn); a click without a drag asks the UI for the size dialog (like
@@ -52,6 +52,7 @@ impl ShapeTool {
         let id: &'static str = match id {
             "roundedRectangle" => "roundedRectangle",
             "ellipse" => "ellipse",
+            "triangle" => "triangle",
             "polygon" => "polygon",
             "star" => "star",
             "lineSegment" => "lineSegment",
@@ -96,6 +97,7 @@ impl ShapeTool {
         match self.id {
             "roundedRectangle" => "Rounded Rectangle",
             "ellipse" => "Ellipse",
+            "triangle" => "Triangle",
             "polygon" => "Polygon",
             "star" => "Star",
             "lineSegment" => "Line",
@@ -151,7 +153,11 @@ impl ShapeTool {
                 ("shape.line".into(), v)
             }
             _ => {
-                let cmd = if self.id == "ellipse" { "shape.ellipse" } else { "shape.rectangle" };
+                let cmd = match self.id {
+                    "ellipse" => "shape.ellipse",
+                    "triangle" => "shape.triangle",
+                    _ => "shape.rectangle",
+                };
                 let mut v = box_params(start, p, m, base);
                 if self.id == "roundedRectangle" {
                     v["radius"] = json!(self.corner_radius);

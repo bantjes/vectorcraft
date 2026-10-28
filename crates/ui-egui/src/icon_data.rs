@@ -146,6 +146,7 @@ pub static ICONS: &[(&str, &[u8])] = &[
     ("dc-place-symbol", include_bytes!("../../../assets/icons/dc-place-symbol.svg")),
     ("dc-polar-grid", include_bytes!("../../../assets/icons/dc-polar-grid.svg")),
     ("dc-polygon", include_bytes!("../../../assets/icons/dc-polygon.svg")),
+    ("dc-triangle", include_bytes!("../../../assets/icons/dc-triangle.svg")),
     ("dc-pucker", include_bytes!("../../../assets/icons/dc-pucker.svg")),
     ("dc-puppet", include_bytes!("../../../assets/icons/dc-puppet.svg")),
     ("dc-rearrange", include_bytes!("../../../assets/icons/dc-rearrange.svg")),

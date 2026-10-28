@@ -93,14 +93,17 @@ pub enum Scheme {
     #[default]
     Modern,
     Classic,
+    /// Marian Vectorcraft's: the Modern greys in a golden-yellow frame, tabs and toolbar.
+    Golden,
 }
 
 impl Scheme {
-    pub const ALL: [Scheme; 2] = [Scheme::Modern, Scheme::Classic];
+    pub const ALL: [Scheme; 3] = [Scheme::Modern, Scheme::Classic, Scheme::Golden];
     pub fn id(self) -> &'static str {
         match self {
             Scheme::Modern => "modern",
             Scheme::Classic => "classic",
+            Scheme::Golden => "golden",
         }
     }
     pub fn parse(s: &str) -> Option<Self> {
@@ -427,6 +430,8 @@ impl Tokens {
         match scheme {
             Scheme::Modern => Self::for_brightness(b).with_accent(accent),
             Scheme::Classic => Self::classic(b),
+            // Gold and black: the light greys under it, so text on the gold stays black.
+            Scheme::Golden => Self::for_brightness(if matches!(b, Brightness::Dark | Brightness::MediumDark) { Brightness::MediumLight } else { b }).with_accent(Accent::Amber).golden_frame(),
         }
     }
 
@@ -446,6 +451,62 @@ impl Tokens {
             flyout_active: if self.dark { a } else { strong },
             row_selected: tint(if self.dark { 0.24 } else { 0.2 }),
             tool_active: tint(if self.dark { 0.3 } else { 0.24 }),
+            ..self
+        }
+    }
+
+    /// The Golden scheme's frame: the window around the cards and the tab strips in golden yellow,
+    /// the panels a pale gold, black lettering, the current tool on green.
+    pub fn golden_frame(self) -> Self {
+        let hex = |s: u32| Color32::from_rgb((s >> 16) as u8, (s >> 8) as u8, s as u8);
+        Tokens {
+            dark: false,
+            app_bar: hex(0xd9a91a),
+            tab_strip: hex(0xe8b923),
+            panel: hex(0xf6edd0),
+            panel_darker: hex(0xeee0b4),
+            input: hex(0xfffbef),
+            input_border: hex(0xb39a4f),
+            border: hex(0x8a6a14),
+            divider: hex(0xdcc78a),
+            hover: hex(0xf1dc95),
+            button: hex(0xf1e2b0),
+            button_border: hex(0xb39a4f),
+            text: hex(0x17130a),
+            text_strong: hex(0x000000),
+            text_dim: hex(0x5c4a1c),
+            text_disabled: hex(0x9a8550),
+            icon: hex(0x1d180c),
+            tool_active: hex(0x3daa4a),
+            row_selected: hex(0xf0d77a),
+            ..self
+        }
+    }
+
+    /// Marian Vectorcraft's toolbar: golden yellow with black icons, the current tool on green
+    /// (the Selection arrow then paints solid black, Direct Selection white with a black edge).
+    pub fn golden(self) -> Self {
+        let hex = |s: u32| Color32::from_rgb((s >> 16) as u8, (s >> 8) as u8, s as u8);
+        Tokens {
+            dark: false,
+            panel: hex(0xe8b923),
+            panel_darker: hex(0xd4a514),
+            tab_strip: hex(0xc99a12),
+            divider: hex(0xc99a12),
+            border: hex(0x8a6a14),
+            input: hex(0xf6dc80),
+            input_border: hex(0x8a6a14),
+            button: hex(0xf3cf5a),
+            button_border: hex(0x8a6a14),
+            text: hex(0x2a2006),
+            text_dim: hex(0x5c4710),
+            text_disabled: hex(0x8a6a14),
+            text_strong: hex(0x000000),
+            icon: hex(0x14100a),
+            hover: hex(0xf3cf5a),
+            tool_active: hex(0x3daa4a),
+            flyout_active: hex(0x1e7a2c),
+            row_selected: hex(0xf3cf5a),
             ..self
         }
     }

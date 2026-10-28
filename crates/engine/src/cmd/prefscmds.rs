@@ -272,7 +272,7 @@ pub const PREF_SPECS: &[PrefSpec] = &[
         "Brightness",
         choice(&[("dark", "Dark"), ("mediumDark", "Medium Dark"), ("mediumLight", "Medium Light"), ("light", "Light")])
     ),
-    p!("uiColorScheme", "User Interface", "", "Color Scheme", choice(&[("modern", "Modern"), ("classic", "Classic")])),
+    p!("uiColorScheme", "User Interface", "", "Color Scheme", choice(&[("modern", "Modern"), ("classic", "Classic"), ("golden", "Golden")])),
     p!(
         "uiAccent",
         "User Interface",
@@ -295,6 +295,7 @@ pub const PREF_SPECS: &[PrefSpec] = &[
     ),
     p!("autoCollapseIconPanels", "User Interface", "", "Auto-Collapse Iconic Panels", bool),
     p!("toolGroupLabels", "User Interface", "", "Show Tool Group Labels", bool),
+    p!("goldenToolbar", "User Interface", "", "Golden Toolbar", bool),
     p!("openDocumentsAsTabs", "User Interface", "", "Open Documents As Tabs", bool),
     p!("largeTabs", "User Interface", "", "Large Tabs", bool),
     p!("systemTitleBar", "User Interface", "", "System Title Bar", bool),

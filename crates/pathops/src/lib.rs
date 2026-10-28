@@ -9,6 +9,7 @@
 mod boolean;
 mod budget;
 mod edit;
+mod extrema;
 mod fit;
 mod offset;
 mod pathfinder;
@@ -23,6 +24,7 @@ pub use edit::{
     AverageAxis, SIMPLIFY_LEVEL, SimplifiedPart, SimplifyOptions, add_anchor_points, auto_simplify_level, average, join, remove_anchor,
     remove_redundant_points, simplify, simplify_level_tolerance, simplify_part, simplify_with, smooth, split_into_grid,
 };
+pub use extrema::{EXTREMA_TOLERANCE, nodes_at_extrema};
 pub use offset::{Cap, Join, offset_path, outline_stroke, stroke_region};
 pub use pathfinder::{FaceMerger, PathfinderOp, Region, Shape, merge_regions, pathfinder, pathfinder_with, region_at, regions};
 pub use planar::{

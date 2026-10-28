@@ -13,9 +13,10 @@
 //!    Program Files), a warning is logged and the platform folder is used. A portable copy never
 //!    reads the old DrawCraft profile, and a run without preferences (`VECTORCRAFT_NO_PREFS`) never
 //!    looks for the marker.
-//! 3. The platform convention. Emma's build keeps its own folder, `VectorCraft Emma`, so the
-//!    installed VectorCraft keeps its settings to itself; the first start copies the original
-//!    VectorCraft folder into it (see [`adopt_original`]).
+//! 3. The platform convention. This build keeps its own folder, `Marian Vectorcraft`, so the
+//!    installed VectorCraft keeps its settings to itself; the first start copies in the folder of
+//!    the build before it (`VectorCraft Emma`) or else the original VectorCraft's (see
+//!    [`adopt_original`]).
 
 use std::ffi::OsString;
 use std::path::{Path, PathBuf};
@@ -35,8 +36,9 @@ pub fn prefs_path(legacy: bool) -> Option<PathBuf> {
 }
 
 /// The settings folder names of this build, and of the original VectorCraft it sits beside.
-const OWN_NAMES: (&str, &str) = ("VectorCraft Emma", "vectorcraft-emma");
-const ORIGINAL_NAMES: (&str, &str) = ("VectorCraft", "vectorcraft");
+const OWN_NAMES: (&str, &str) = ("Marian Vectorcraft", "marian-vectorcraft");
+/// Where the first start copies settings from: the first of these that exists.
+const EARLIER_NAMES: [(&str, &str); 2] = [("VectorCraft Emma", "vectorcraft-emma"), ("VectorCraft", "vectorcraft")];
 
 /// The first time this build's own settings folder is needed and doesn't exist yet, copy the
 /// original VectorCraft's folder into it, so fonts, swatches and settings carry over. The original
@@ -50,7 +52,8 @@ fn adopt_original() {
         if env("VECTORCRAFT_CONFIG_DIR").is_some() || env("VECTORCRAFT_NO_PREFS").is_some() || portable_dir().is_some() {
             return;
         }
-        let (Some(own), Some(original)) = (named_dir(os, OWN_NAMES, &env), named_dir(os, ORIGINAL_NAMES, &env)) else { return };
+        let Some(own) = named_dir(os, OWN_NAMES, &env) else { return };
+        let Some(original) = EARLIER_NAMES.into_iter().filter_map(|names| named_dir(os, names, &env)).find(|d| d.is_dir()) else { return };
         if let Err(e) = adopt_original_in(&own, &original) {
             log::warn!("{e}");
         }
@@ -262,10 +265,10 @@ mod tests {
 
     #[test]
     fn unset_override_keeps_platform_paths_and_legacy_migration() {
-        assert_eq!(prefs_path_with("macos", false, environment, installed), Some("/user/Library/Application Support/VectorCraft Emma/ui.json".into()));
+        assert_eq!(prefs_path_with("macos", false, environment, installed), Some("/user/Library/Application Support/Marian Vectorcraft/ui.json".into()));
         assert_eq!(prefs_path_with("macos", true, environment, installed), Some("/user/Library/Application Support/DrawCraft/ui.json".into()));
-        assert_eq!(prefs_path_with("windows", false, environment, installed), Some("/roaming/VectorCraft Emma/ui.json".into()));
-        assert_eq!(prefs_path_with("linux", false, environment, installed), Some("/xdg-config/vectorcraft-emma/ui.json".into()));
+        assert_eq!(prefs_path_with("windows", false, environment, installed), Some("/roaming/Marian Vectorcraft/ui.json".into()));
+        assert_eq!(prefs_path_with("linux", false, environment, installed), Some("/xdg-config/marian-vectorcraft/ui.json".into()));
         assert_eq!(
             prefs_path_with("linux", true, |key| if key == "HOME" { environment(key) } else { None }, installed),
             Some("/user/.config/drawcraft/ui.json".into())
@@ -294,7 +297,7 @@ mod tests {
     fn a_run_without_preferences_never_looks_for_the_portable_folder() {
         let env = |key: &str| if key == "VECTORCRAFT_NO_PREFS" { Some("1".into()) } else { environment(key) };
         let portable = || -> Option<PathBuf> { panic!("the portable folder is not looked for under VECTORCRAFT_NO_PREFS") };
-        assert_eq!(prefs_path_with("windows", false, env, portable), Some("/roaming/VectorCraft Emma/ui.json".into()));
+        assert_eq!(prefs_path_with("windows", false, env, portable), Some("/roaming/Marian Vectorcraft/ui.json".into()));
         assert_eq!(prefs_path_with("windows", true, env, portable), Some("/roaming/DrawCraft/ui.json".into()));
     }
 
@@ -412,7 +415,7 @@ mod tests {
     #[test]
     fn emmas_build_copies_the_original_settings_once_and_leaves_them_alone() {
         let root = temp("adopt");
-        let (own, original) = (root.join("VectorCraft Emma"), root.join("VectorCraft"));
+        let (own, original) = (root.join("Marian Vectorcraft"), root.join("VectorCraft Emma"));
         assert_eq!(adopt_original_in(&own, &original), Ok(()));
         assert!(!own.exists(), "nothing to copy, nothing made");
 

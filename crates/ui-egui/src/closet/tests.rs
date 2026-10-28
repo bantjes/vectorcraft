@@ -41,19 +41,30 @@ fn every_key_the_build_starts_with_names_something_that_can_be_put_away() {
 fn the_starting_sort_puts_tools_away_and_moves_pen_and_measure() {
     let app = app();
     let shown = toolbar(&app);
-    for gone in ["pencil", "arc", "eraser", "knife", "paintbrush", "curvature", "zoom", "printTiling", "warp", "shear", "mesh", "dimension"] {
+    for gone in ["pencil", "arc", "eraser", "knife", "paintbrush", "curvature", "zoom", "printTiling", "warp", "shear", "mesh", "polygon", "star", "flare"] {
         assert!(!shown.contains(&gone), "{gone} shows");
     }
-    for kept in ["selection", "pen", "rectangle", "polygon", "shaper", "scissors", "join", "rotate", "scale", "reflect", "blend", "type", "measure", "hand"] {
+    for kept in ["selection", "pen", "rectangle", "shaper", "scissors", "join", "rotate", "scale", "reflect", "blend", "type", "measure", "hand"] {
         assert!(shown.contains(&kept), "{kept} is missing");
     }
     let slots = crate::toolbar::slots(&app);
-    // Pen right under the selection tools; Measure with the navigation tools.
+    // Pen right under the selection tools; Measure, with Dimension, among the navigation tools.
     assert_eq!(slots[2].1[0], "pen");
     let navigate = slots.iter().position(|(c, _)| *c == Some("Navigate")).unwrap();
-    assert!(slots[navigate..].iter().take_while(|(c, _)| c.is_none() || *c == Some("Navigate")).any(|(_, s)| s.contains(&"measure")));
+    assert!(slots[navigate..].iter().take_while(|(c, _)| c.is_none() || *c == Some("Navigate")).any(|(_, s)| s.contains(&"measure") && s.contains(&"dimension")));
     // Pencil's category heading moves to the next slot that shows.
     assert!(slots.iter().any(|(c, s)| *c == Some("Draw") && s[0] == "scissors"));
+}
+
+#[test]
+fn a_slot_never_shows_a_tool_put_away_since_it_was_last_used() {
+    let mut app = app();
+    app.ui.slot_tool.insert("gradient".into(), "mesh".into());
+    let slots = crate::toolbar::slots(&app);
+    let (_, color) = slots.iter().find(|(_, s)| s.contains(&"gradient")).unwrap();
+    assert_eq!(crate::toolbar::remembered(&app, color), "gradient");
+    app.ui.slot_tool.insert("gradient".into(), "gradient".into());
+    assert_eq!(crate::toolbar::remembered(&app, color), "gradient");
 }
 
 #[test]
