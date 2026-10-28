@@ -37,13 +37,13 @@
     <string>zh-Hant</string>
   </array>
   <key>CFBundleDisplayName</key>
-  <string>VectorCraft</string>
+  <string>VectorCraft Emma</string>
   <key>CFBundleName</key>
-  <string>VectorCraft</string>
+  <string>VectorCraft Emma</string>
   <key>CFBundleExecutable</key>
   <string>VectorCraft</string>
   <key>CFBundleIdentifier</key>
-  <string>ai.storyteller.vectorcraft</string>
+  <string>ai.storyteller.vectorcraft.emma</string>
   <key>CFBundleInfoDictionaryVersion</key>
   <string>6.0</string>
   <key>CFBundlePackageType</key>

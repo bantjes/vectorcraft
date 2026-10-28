@@ -13,7 +13,9 @@
 //!    Program Files), a warning is logged and the platform folder is used. A portable copy never
 //!    reads the old DrawCraft profile, and a run without preferences (`VECTORCRAFT_NO_PREFS`) never
 //!    looks for the marker.
-//! 3. The platform convention.
+//! 3. The platform convention. Emma's build keeps its own folder, `VectorCraft Emma`, so the
+//!    installed VectorCraft keeps its settings to itself; the first start copies the original
+//!    VectorCraft folder into it (see [`adopt_original`]).
 
 use std::ffi::OsString;
 use std::path::{Path, PathBuf};
@@ -25,7 +27,49 @@ pub const PORTABLE_MARKERS: [&str; 2] = ["portable.txt", "VectorCraft.portable"]
 pub const PORTABLE_DATA_DIR: &str = "VectorCraftData";
 
 pub fn prefs_path(legacy: bool) -> Option<PathBuf> {
-    prefs_path_with(std::env::consts::OS, legacy, |key| std::env::var_os(key), portable_dir)
+    let path = prefs_path_with(std::env::consts::OS, legacy, |key| std::env::var_os(key), portable_dir)?;
+    if !legacy {
+        adopt_original();
+    }
+    Some(path)
+}
+
+/// The settings folder names of this build, and of the original VectorCraft it sits beside.
+const OWN_NAMES: (&str, &str) = ("VectorCraft Emma", "vectorcraft-emma");
+const ORIGINAL_NAMES: (&str, &str) = ("VectorCraft", "vectorcraft");
+
+/// The first time this build's own settings folder is needed and doesn't exist yet, copy the
+/// original VectorCraft's folder into it, so fonts, swatches and settings carry over. The original
+/// folder is only read. Skipped with an override, in portable mode and in a run without
+/// preferences. Looked at once per process.
+fn adopt_original() {
+    static DONE: OnceLock<()> = OnceLock::new();
+    DONE.get_or_init(|| {
+        let os = std::env::consts::OS;
+        let env = |key: &str| std::env::var_os(key);
+        if env("VECTORCRAFT_CONFIG_DIR").is_some() || env("VECTORCRAFT_NO_PREFS").is_some() || portable_dir().is_some() {
+            return;
+        }
+        let (Some(own), Some(original)) = (named_dir(os, OWN_NAMES, &env), named_dir(os, ORIGINAL_NAMES, &env)) else { return };
+        if let Err(e) = adopt_original_in(&own, &original) {
+            log::warn!("{e}");
+        }
+    });
+}
+
+/// Copy `original` into `own` when `own` doesn't exist and `original` does; otherwise nothing.
+fn adopt_original_in(own: &Path, original: &Path) -> Result<(), String> {
+    if own.exists() || !original.is_dir() {
+        return Ok(());
+    }
+    std::fs::create_dir_all(own).map_err(|e| format!("couldn't create {}: {e}", own.display()))?;
+    copy_dir(original, own)?;
+    // The original's own logs and crash-recovery copies stay with it.
+    for its_own in ["logs", "Data Recovery"] {
+        let _ = std::fs::remove_dir_all(own.join(its_own));
+    }
+    log::info!("copied the settings from {} to {}", original.display(), own.display());
+    Ok(())
 }
 
 /// `portable` is the portable settings folder, if any: only asked for when no override is set and
@@ -47,7 +91,11 @@ fn prefs_path_with(os: &str, legacy: bool, env: impl Fn(&str) -> Option<OsString
 
 /// The platform's settings folder of VectorCraft, or of DrawCraft (`legacy`).
 fn platform_dir(os: &str, legacy: bool, env: &impl Fn(&str) -> Option<OsString>) -> Option<PathBuf> {
-    let (name, lower) = if legacy { ("DrawCraft", "drawcraft") } else { ("VectorCraft", "vectorcraft") };
+    named_dir(os, if legacy { ("DrawCraft", "drawcraft") } else { OWN_NAMES }, env)
+}
+
+/// The platform's settings folder for an app called `name` (`lower` on Linux and BSD).
+fn named_dir(os: &str, (name, lower): (&str, &str), env: &impl Fn(&str) -> Option<OsString>) -> Option<PathBuf> {
     match os {
         "macos" => env("HOME").map(|p| PathBuf::from(p).join("Library/Application Support").join(name)),
         "windows" => env("APPDATA").map(|p| PathBuf::from(p).join(name)),
@@ -214,10 +262,10 @@ mod tests {
 
     #[test]
     fn unset_override_keeps_platform_paths_and_legacy_migration() {
-        assert_eq!(prefs_path_with("macos", false, environment, installed), Some("/user/Library/Application Support/VectorCraft/ui.json".into()));
+        assert_eq!(prefs_path_with("macos", false, environment, installed), Some("/user/Library/Application Support/VectorCraft Emma/ui.json".into()));
         assert_eq!(prefs_path_with("macos", true, environment, installed), Some("/user/Library/Application Support/DrawCraft/ui.json".into()));
-        assert_eq!(prefs_path_with("windows", false, environment, installed), Some("/roaming/VectorCraft/ui.json".into()));
-        assert_eq!(prefs_path_with("linux", false, environment, installed), Some("/xdg-config/vectorcraft/ui.json".into()));
+        assert_eq!(prefs_path_with("windows", false, environment, installed), Some("/roaming/VectorCraft Emma/ui.json".into()));
+        assert_eq!(prefs_path_with("linux", false, environment, installed), Some("/xdg-config/vectorcraft-emma/ui.json".into()));
         assert_eq!(
             prefs_path_with("linux", true, |key| if key == "HOME" { environment(key) } else { None }, installed),
             Some("/user/.config/drawcraft/ui.json".into())
@@ -246,7 +294,7 @@ mod tests {
     fn a_run_without_preferences_never_looks_for_the_portable_folder() {
         let env = |key: &str| if key == "VECTORCRAFT_NO_PREFS" { Some("1".into()) } else { environment(key) };
         let portable = || -> Option<PathBuf> { panic!("the portable folder is not looked for under VECTORCRAFT_NO_PREFS") };
-        assert_eq!(prefs_path_with("windows", false, env, portable), Some("/roaming/VectorCraft/ui.json".into()));
+        assert_eq!(prefs_path_with("windows", false, env, portable), Some("/roaming/VectorCraft Emma/ui.json".into()));
         assert_eq!(prefs_path_with("windows", true, env, portable), Some("/roaming/DrawCraft/ui.json".into()));
     }
 
@@ -359,6 +407,29 @@ mod tests {
 
         let _ = std::fs::remove_dir_all(&exe);
         let _ = std::fs::remove_dir_all(&previous);
+    }
+
+    #[test]
+    fn emmas_build_copies_the_original_settings_once_and_leaves_them_alone() {
+        let root = temp("adopt");
+        let (own, original) = (root.join("VectorCraft Emma"), root.join("VectorCraft"));
+        assert_eq!(adopt_original_in(&own, &original), Ok(()));
+        assert!(!own.exists(), "nothing to copy, nothing made");
+
+        std::fs::create_dir_all(original.join("Swatches")).unwrap();
+        std::fs::create_dir_all(original.join("Data Recovery")).unwrap();
+        std::fs::create_dir_all(original.join("logs")).unwrap();
+        std::fs::write(original.join("ui.json"), b"{}").unwrap();
+        std::fs::write(original.join("Swatches/warm.ase"), b"ase").unwrap();
+        assert_eq!(adopt_original_in(&own, &original), Ok(()));
+        assert_eq!(std::fs::read(own.join("Swatches/warm.ase")).unwrap(), b"ase");
+        assert!(own.join("ui.json").is_file() && !own.join("logs").exists() && !own.join("Data Recovery").exists());
+        assert!(original.join("ui.json").is_file() && original.join("logs").is_dir(), "the original is left as it is");
+
+        std::fs::write(original.join("later.txt"), b"").unwrap();
+        assert_eq!(adopt_original_in(&own, &original), Ok(()));
+        assert!(!own.join("later.txt").exists(), "copied only the first time");
+        let _ = std::fs::remove_dir_all(&root);
     }
 
     #[test]
