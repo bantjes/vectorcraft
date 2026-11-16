@@ -349,13 +349,27 @@ fn tools_drag_between_the_drawer_and_the_toolbar() {
     drag(&mut app, &ctx, 5.0, tools[0].center(), tools[3].center_top() + vec2(0.0, 3.0));
     let pen = &["pen", "addAnchor", "deleteAnchor", "anchorPoint"][..];
     assert_eq!(&slots(&app)[..4], [&["directSelection", "groupSelection"][..], pen, &["selection"], &["lasso", "magicWand"]]);
-    // The drawer closed, the toolbar is locked: the same drag moves nothing.
+    // The drawer closed, tools still drag within the toolbar.
     app.run("window.editToolbar", json!({"open": false})).unwrap();
     frame(&mut app, &ctx, 6.0, vec![]);
     let before = slots(&app);
     let tools = crate::toolbar::tests::widget_rects(&ctx, BUTTON);
     drag(&mut app, &ctx, 7.0, tools[0].center(), tools[2].center_bottom() - vec2(0.0, 3.0));
-    assert_eq!(slots(&app), before);
+    assert_ne!(slots(&app), before);
+    // And onto the Closet's door, which shows beside the toolbar during the drag.
+    let tools = crate::toolbar::tests::widget_rects(&ctx, BUTTON);
+    let first = slots(&app)[0][0];
+    let from = tools[0].center();
+    frame(&mut app, &ctx, 8.0, vec![Event::PointerMoved(from), button(from, true)]);
+    frame(&mut app, &ctx, 8.05, vec![Event::PointerMoved(from + vec2(20.0, 0.0))]);
+    frame(&mut app, &ctx, 8.1, vec![Event::PointerMoved(from + vec2(40.0, 0.0))]);
+    let door = ctx.memory(|m| m.area_rect(egui::Id::unique("closet-drag-shelves"))).expect("the doors show during the drag");
+    let at = door.left_top() + vec2(20.0, 10.0);
+    frame(&mut app, &ctx, 8.15, vec![Event::PointerMoved(at)]);
+    frame(&mut app, &ctx, 8.2, vec![button(at, false)]);
+    frame(&mut app, &ctx, 8.25, vec![]);
+    assert!(crate::closet::tool_hidden(&app.ui, first), "{first} is in the Closet");
+    assert!(app.take_prefs_changed(), "and the move is saved at once");
 }
 
 #[test]

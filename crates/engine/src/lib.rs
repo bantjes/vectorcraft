@@ -250,7 +250,7 @@ pub(crate) use command_sets::SELECTS_GIVEN_IDS;
 #[cfg(test)]
 use command_sets::given_ids;
 pub use command_sets::{FIT_ACTIVE_ARTBOARD, ON_ACTIVE_ARTBOARD};
-pub use doc_state::{DocState, OpenRows, RecalledSelection};
+pub use doc_state::{DocState, OpenRows, RecalledSelection, open_documents_with_layers_closed, save_new_documents_as_pdf};
 pub use error::{EngineError, Result};
 pub use history::{History, HistoryEntry, NamedStep, default_history_budget};
 pub(crate) use interaction::PreviewCopies;

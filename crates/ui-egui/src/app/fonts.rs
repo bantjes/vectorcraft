@@ -37,6 +37,13 @@ impl VectorcraftApp {
         self.font_check = Some((rx, wake));
     }
 
+    /// The platform signalled that the installed fonts changed (macOS's font manager
+    /// notification): look now, and wake the app for the answer.
+    pub fn fonts_changed(&mut self) {
+        self.font_check = None;
+        self.refresh_installed_fonts(true);
+    }
+
     /// Rescan the fonts once [`Self::refresh_installed_fonts`]'s look says they changed.
     pub(super) fn poll_font_check(&mut self, ctx: &egui::Context) {
         let Some((check, wake)) = &self.font_check else { return };

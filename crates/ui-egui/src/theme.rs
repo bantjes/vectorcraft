@@ -431,7 +431,9 @@ impl Tokens {
             Scheme::Modern => Self::for_brightness(b).with_accent(accent),
             Scheme::Classic => Self::classic(b),
             // Gold and black: the light greys under it, so text on the gold stays black.
-            Scheme::Golden => Self::for_brightness(if matches!(b, Brightness::Dark | Brightness::MediumDark) { Brightness::MediumLight } else { b }).with_accent(Accent::Amber).golden_frame(),
+            Scheme::Golden => Self::for_brightness(if matches!(b, Brightness::Dark | Brightness::MediumDark) { Brightness::MediumLight } else { b })
+                .with_accent(Accent::Amber)
+                .golden_frame(),
         }
     }
 
@@ -479,6 +481,8 @@ impl Tokens {
             icon: hex(0x1d180c),
             tool_active: hex(0x3daa4a),
             row_selected: hex(0xf0d77a),
+            // Around the artboard: the 51 grey of Marian PhotoCraft's image window.
+            pasteboard: hex(0x333333),
             ..self
         }
     }

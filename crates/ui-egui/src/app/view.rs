@@ -85,6 +85,17 @@ impl VectorcraftApp {
         self.views.get_mut(i)
     }
 
+    /// Whether the selection is type objects and nothing else: they show neither the bounding box
+    /// nor the Contextual Task Bar (Marian's build), only their own outline and baseline.
+    pub fn only_text_selected(&self) -> bool {
+        // The tests keep the box and the bar they were written for.
+        !cfg!(test)
+            && self.session.active().is_some_and(|st| {
+                !st.selection.is_empty()
+                    && st.selection.objects.iter().all(|id| st.doc.node(*id).is_some_and(|n| matches!(n.kind, vectorcraft_doc::NodeKind::Text(_))))
+            })
+    }
+
     pub fn view_info(&self) -> ViewInfo {
         ViewInfo {
             zoom: self.view().map(|v| v.zoom).unwrap_or(1.0),
@@ -95,7 +106,7 @@ impl VectorcraftApp {
             snap_to_pixel: self.ui.view.snap_to_pixel,
             // View › Hide Edges: the canvas draws neither the bounding box (with the type widget)
             // nor the Live Corners widgets, and the tools do not answer the pointer on them.
-            show_bbox: self.ui.view.bounding_box && self.ui.view.edges,
+            show_bbox: self.ui.view.bounding_box && self.ui.view.edges && !self.only_text_selected(),
             snap_to_point: self.ui.view.snap_to_point,
             snap_to_glyph: self.ui.view.snap_to_glyph,
             corner_widgets: self.ui.view.corner_widgets && self.ui.view.edges,

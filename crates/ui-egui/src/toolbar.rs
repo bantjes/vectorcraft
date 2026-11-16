@@ -33,7 +33,10 @@ const STRIP_BUTTON: egui::Vec2 = vec2(32.0, PITCH);
 /// The Basic toolbar: (category, slots); each slot is a flyout group (first = default).
 pub const BASIC: &[(&str, &[&[&str]])] = &[
     // The Pen sits under the selection tools in this build; Dimension shares Measure's flyout.
-    ("Select", &[&["selection"], &["directSelection", "groupSelection"], &["pen", "addAnchor", "deleteAnchor", "anchorPoint"], &["lasso", "magicWand"]]),
+    (
+        "Select",
+        &[&["selection"], &["directSelection", "groupSelection"], &["pen", "addAnchor", "deleteAnchor", "anchorPoint"], &["lasso", "magicWand"]],
+    ),
     (
         "Shapes",
         // Polygon and Shaper in the shapes' flyout.
@@ -159,6 +162,8 @@ pub fn show(app: &mut VectorcraftApp, ui: &mut Ui) {
     crate::dialogs::dimension::floating(app, ui.ctx());
     flyout(app, ui.ctx());
     crate::edit_toolbar::drawer(app, ui.ctx());
+    crate::closet::drag_shelves(app, ui.ctx());
+    crate::edit_toolbar::ghost(ui.ctx(), &Tokens::get(ui.ctx()));
 }
 
 /// The Tools panel's contents, docked or floating at `floating`.
@@ -208,7 +213,6 @@ fn body(app: &mut VectorcraftApp, ui: &mut Ui, cols: usize, floating: Option<egu
         // While Edit Toolbar's drawer is open, the tools drag (to new places or into the drawer)
         // instead of opening their flyouts.
         let editing = app.ui.tools_drawer;
-        let closet_open = crate::closet::panel_shown(ui.ctx());
         let mut buttons: Vec<(usize, egui::Rect)> = vec![];
         let mut open_flyout: Option<(Vec<&'static str>, egui::Rect)> = None;
         // A group torn off into a floating flyout is raised instead of opening its flyout.
@@ -258,14 +262,15 @@ fn body(app: &mut VectorcraftApp, ui: &mut Ui, cols: usize, floating: Option<egu
                         let c = rect.center() + vec2(12.5, 10.0);
                         ui.painter().add(egui::Shape::convex_polygon(vec![c, c + vec2(-3.5, 0.0), c + vec2(0.0, -3.5)], t.icon, Stroke::NONE));
                     }
-                    if editing {
-                        buttons.push((k, rect));
-                    }
-                    // A tool drags into Edit Toolbar's drawer, or onto the Closet panel's shelves.
-                    if editing || closet_open {
+                    buttons.push((k, rect));
+                    // A tool always drags: to a new place in the toolbar, into Edit Toolbar's
+                    // drawer, or onto the Closet's shelves (not once its long press opened the
+                    // flyout).
+                    if held != Some(resp.id) && app.ui.flyout.is_none() {
                         resp.dnd_set_drag_payload(crate::edit_toolbar::ToolDrag { tool: shown.id, from_toolbar: true });
                     }
-                    let press = if slot.len() > 1 && !editing { flyout_press(ui, &resp, rect) } else { None };
+                    let dragging = egui::DragAndDrop::has_payload_of_type::<crate::edit_toolbar::ToolDrag>(ui.ctx());
+                    let press = if slot.len() > 1 && !editing && !dragging { flyout_press(ui, &resp, rect) } else { None };
                     let alt = ui.input(|inp| inp.modifiers.alt);
                     if press.is_some() {
                         if is_floating(app, slot[0]) {
@@ -293,9 +298,7 @@ fn body(app: &mut VectorcraftApp, ui: &mut Ui, cols: usize, floating: Option<egu
             });
             i += row.len();
         }
-        if editing {
-            crate::edit_toolbar::toolbar_drop(app, ui, &buttons, cols, bounds);
-        }
+        crate::edit_toolbar::toolbar_drop(app, ui, &buttons, cols, bounds);
         if let Some(key) = raise {
             raise_floating(ui.ctx(), key);
         }

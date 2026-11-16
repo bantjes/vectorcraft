@@ -167,7 +167,8 @@ impl FontDb {
         family
     }
 
-    /// Style names available for `family`: upright styles by weight, then italics.
+    /// Style names available for `family`: Regular and Italic, then the other weights from light to
+    /// heavy, each upright style followed by its italic.
     pub fn styles(&self, family: &str) -> Vec<String> {
         let (family, _) = self.canonical(family, "");
         let family = family.as_str();
@@ -185,7 +186,10 @@ impl FontDb {
                 }
             }
         }
-        v.sort_by(|a, b| a.0.cmp(&b.0).then(a.1.total_cmp(&b.1)).then(a.2.cmp(&b.2)));
+        // The plain pair first (Regular or Roman, then its Italic), then each weight with its
+        // italic right after it: Book, Book Italic, Bold, Bold Italic…
+        let plain = |t: &(bool, f32, String)| !matches!(t.2.to_ascii_lowercase().as_str(), "regular" | "roman" | "normal" | "italic" | "oblique");
+        v.sort_by(|a, b| plain(a).cmp(&plain(b)).then(a.1.total_cmp(&b.1)).then(a.0.cmp(&b.0)).then(a.2.cmp(&b.2)));
         v.dedup_by(|a, b| a.2 == b.2);
         v.into_iter().map(|t| t.2).collect()
     }

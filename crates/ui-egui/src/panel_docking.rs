@@ -1020,8 +1020,10 @@ fn known(action: &Action<String>) -> bool {
 /// may hold them.
 fn put_away_panels(app: &mut VectorcraftApp) {
     let layout = layout_of(&app.ui);
-    let away: Vec<&str> =
-        crate::state::all_panels().map(|(id, _)| id).filter(|id| crate::closet::panel_hidden(&app.ui, id) && layout.contains(&id.to_string())).collect();
+    let away: Vec<&str> = crate::state::all_panels()
+        .map(|(id, _)| id)
+        .filter(|id| crate::closet::panel_hidden(&app.ui, id) && layout.contains(&id.to_string()))
+        .collect();
     if app.ui.open_panel.as_deref().is_some_and(|p| crate::closet::panel_hidden(&app.ui, p)) {
         app.ui.open_panel = None;
     }
@@ -1121,6 +1123,7 @@ pub(crate) fn show(app: &mut VectorcraftApp, ui: &mut egui::Ui) {
         app.open_dropped_files(window.dropped, None, shift);
     }
     forward_keys(app, &ctx, output.forwarded_events, output.forwarded_modifiers);
+    grow_floating(app, &ctx);
 }
 
 /// Whether a modal is open: a dialog, About, the command palette, a native file dialog, or a
@@ -1191,11 +1194,71 @@ const DOCK_LABELS: &[(&str, &str)] = &[
 ];
 
 /// The size a panel floats at (tab strip included), whatever the size of the dock it left.
+/// The panels of options (fields, buttons and checkboxes, no list that grows with the box): they
+/// open as tall as their options, in a flyout or a floating window, and never scroll.
+fn fits_content(panel: &str) -> bool {
+    matches!(
+        panel,
+        "color"
+            | "stroke"
+            | "gradient"
+            | "transparency"
+            | "transform"
+            | "align"
+            | "pathfinder"
+            | "character"
+            | "paragraph"
+            | "openType"
+            | "patternOptions"
+            | "info"
+            | "magicWand"
+            | "attributes"
+            | "tabs"
+    )
+}
+
+/// The most a panel of options is fitted to (the window's height caps it first).
+const FITTED_MAX: f32 = 1600.0;
+
+/// Where a panel's body leaves how much taller its content is than its box.
+fn short_id(panel: &str) -> egui::Id {
+    egui::Id::unique("panel-content-short").with(panel)
+}
+
+/// Floating windows showing a panel of options grow to that panel's whole height.
+fn grow_floating(app: &mut VectorcraftApp, ctx: &egui::Context) {
+    let screen = ctx.content_rect();
+    let grown: Vec<(String, [f32; 4])> = layout_of(&app.ui)
+        .floating
+        .iter()
+        .filter_map(|w| {
+            let Node::Tabs { panels, active } = &w.root else { return None };
+            if w.native.is_some() || w.minimized {
+                return None;
+            }
+            let panel = panels.get(*active).filter(|p| fits_content(p))?;
+            let short = ctx.data(|d| d.get_temp::<f32>(short_id(panel))).filter(|s| s.is_finite() && *s > 0.5)?;
+            let [x, y, width, height] = w.rect;
+            let tall = (height + short).min((screen.height() - 8.0).max(height));
+            (tall > height + 0.5).then(|| (panel.clone(), [x, y.min((screen.bottom() - tall).max(screen.top())), width, tall]))
+        })
+        .collect();
+    for (panel, rect) in grown {
+        ctx.data_mut(|d| d.remove::<f32>(short_id(&panel)));
+        if let Err(error) = gesture(app, Action::MoveFloating { panel, rect }) {
+            app.ui.status = error;
+        }
+        ctx.request_repaint();
+    }
+}
+
 fn floating_size(panel: &str) -> egui::Vec2 {
     match panel {
         "properties" | "layers" | "libraries" => egui::vec2(300.0, 420.0),
         // Room for a tool's name beside its two buttons, and a good part of the list.
         crate::closet::ID => egui::vec2(440.0, 560.0),
+        // A good part of a font's glyphs at once.
+        "glyphs" => egui::vec2(320.0, 620.0),
         _ => egui::vec2(260.0, 360.0),
     }
 }
@@ -1225,10 +1288,25 @@ impl craft_ui::docking::DockContent<String> for PanelContent<'_> {
             crate::dock::panel_body(self.app, ui, id, width, height);
         } else {
             // Shrinking to the content's height lets craft-ui fit a float or flyout to it.
+            let room = ui.available_height();
+            let ctx = ui.ctx().clone();
             crate::widgets::panel_scroll(ui, egui::ScrollArea::vertical().id_salt(("shared-panel-body", id)).auto_shrink([false, true]), |ui| {
                 let width = ui.available_width();
-                crate::dock::panel_body(self.app, ui, id, width, height)
+                crate::dock::panel_body(self.app, ui, id, width, height);
+                // How much taller the content is than its box: a floating window grows by it
+                // ([`grow_floating`]), so a panel's options never scroll.
+                let short = ui.min_rect().height() - room;
+                ctx.data_mut(|d| d.insert_temp(short_id(id), short));
             });
+            // Content that outgrew a box fitted to it earlier (the Paragraph panel once text is
+            // selected): the scroll area hides how tall it is, so say so, and craft-ui fits the
+            // flyout to it again.
+            let short = ctx.data(|d| d.get_temp::<f32>(short_id(id))).unwrap_or(0.0);
+            if fits_content(id) && short.is_finite() && short > 0.5 {
+                let mut tall = ui.min_rect();
+                tall.max.y += short.min(FITTED_MAX);
+                ui.expand_to_include_rect(tall);
+            }
         }
     }
 
@@ -1251,7 +1329,10 @@ impl craft_ui::docking::DockContent<String> for PanelContent<'_> {
     }
 
     fn floating_size(&self, id: &String) -> Option<egui::Vec2> {
-        Some(floating_size(id))
+        // A flyout or a floated panel fits its content up to this height: all of it, for the
+        // panels of options (craft-ui keeps it inside the window).
+        let size = floating_size(id);
+        Some(if fits_content(id) { egui::vec2(size.x, FITTED_MAX) } else { size })
     }
 
     fn paint_icon(&mut self, painter: &egui::Painter, rect: egui::Rect, id: &String, color: egui::Color32) -> bool {

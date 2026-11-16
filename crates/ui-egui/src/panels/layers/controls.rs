@@ -35,7 +35,7 @@ pub(super) fn filter_button(app: &mut VectorcraftApp, ui: &mut Ui) {
 }
 
 /// The bottom bar: the layer count and the panel's buttons.
-pub(super) fn bottom_bar(app: &mut VectorcraftApp, ui: &mut Ui, view: &View, doc: &Document, actions: &mut Vec<(String, Value)>) {
+pub(super) fn bottom_bar(_app: &mut VectorcraftApp, ui: &mut Ui, view: &View, doc: &Document, actions: &mut Vec<(String, Value)>) {
     let t = &view.t;
     let (bar, _) = ui.allocate_exact_size(vec2(ui.available_width(), 30.0), Sense::hover());
     ui.painter().line_segment([bar.left_top(), bar.right_top()], Stroke::new(1.0, t.divider));
@@ -49,7 +49,7 @@ pub(super) fn bottom_bar(app: &mut VectorcraftApp, ui: &mut Ui, view: &View, doc
     );
     let m = ui.input(|i| i.modifiers);
     let mut child = ui.new_child(egui::UiBuilder::new().max_rect(bar).layout(egui::Layout::right_to_left(egui::Align::Center)));
-    let trash = widgets::icon_button(&mut child, "trash-2", tl!("Delete Selection"), false, 24.0);
+    let trash = widgets::icon_button(&mut child, "trash-2", tl!("Delete Layer"), false, 24.0);
     // A target circle dropped on the trash clears that appearance (dragged rows: below). Peek at
     // the payload's type before taking it: egui's take drops a payload of another type.
     if trash.dnd_hover_payload::<PanelDrag>().is_some()
@@ -58,11 +58,7 @@ pub(super) fn bottom_bar(app: &mut VectorcraftApp, ui: &mut Ui, view: &View, doc
     {
         actions.push(("appearance.clear".into(), json!({"ids": [id.0]})));
     } else if trash.clicked() {
-        if view.rows.is_empty() && app.session.active().is_some_and(|d| !d.selection.is_empty()) {
-            actions.push(("edit.clear".into(), json!({})));
-        } else {
-            actions.push(("layer.delete".into(), json!({})));
-        }
+        actions.push(("layer.delete".into(), json!({})));
     }
     // Create New Layer: Alt asks for its options first, Ctrl/Cmd puts it on top of every layer.
     let new_layer = widgets::icon_button(&mut child, "file-plus", tl!("Create New Layer"), false, 24.0);
@@ -86,15 +82,6 @@ pub(super) fn bottom_bar(app: &mut VectorcraftApp, ui: &mut Ui, view: &View, doc
         if over {
             child.painter().rect_stroke(button.rect, 3.0, Stroke::new(1.5, t.accent), StrokeKind::Inside);
         }
-    }
-    if widgets::icon_button(&mut child, "plus", tl!("Create New Sublayer"), false, 24.0).clicked() {
-        actions.push(if m.alt { ("ui.newLayer".into(), json!({"sublayer": true})) } else { ("layer.newSublayer".into(), json!({})) });
-    }
-    if widgets::icon_button(&mut child, "frame", tl!("Make/Release Clipping Mask"), false, 24.0).clicked() {
-        actions.push(("layer.clippingMask.toggle".into(), json!({})));
-    }
-    if widgets::icon_button(&mut child, "search", tl!("Locate Object"), false, 24.0).clicked() {
-        actions.push(("layer.locate".into(), json!({})));
     }
 }
 
@@ -135,6 +122,18 @@ pub fn menu(app: &mut VectorcraftApp, ui: &mut Ui) {
         Some(("Make/Release Clipping Mask", "layer.clippingMask.toggle", json!({}), true, false)),
         None,
     ];
+    if super::manual_only() {
+        // The only way rows open and close in Marian's build.
+        let picked: Vec<u64> = targets.iter().map(|i| i.0).collect();
+        let layers: Vec<u64> = doc.layers.iter().map(|l| l.id.0).collect();
+        items.extend([
+            Some(("Expand Selected Layer", "ui.layersExpand", json!({"ids": picked, "open": true}), !targets.is_empty(), false)),
+            Some(("Collapse Selected Layer", "ui.layersExpand", json!({"ids": picked, "open": false}), !targets.is_empty(), false)),
+            Some(("Expand All Layers", "ui.layersExpand", json!({"ids": layers, "open": true}), true, false)),
+            Some(("Collapse All", "ui.layersExpand", json!({"open": false}), true, false)),
+            None,
+        ]);
+    }
     items.push(if isolated {
         Some(("Exit Isolation Mode", "object.exitIsolation", json!({}), true, false))
     } else {

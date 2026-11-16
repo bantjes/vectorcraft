@@ -94,6 +94,29 @@ pub struct DocState {
     pub opened_by: Option<Arc<file_access::AutomationRoots>>,
 }
 
+/// Whether a document that wasn't opened from a file Save writes back saves as PDF (with Preserve
+/// Editing Capabilities it keeps the whole document) instead of a native file. The app turns it
+/// on at startup ([`save_new_documents_as_pdf`]); the libraries and their tests keep native.
+static NEW_DOCUMENTS_AS_PDF: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+
+/// Have new documents default to saving as PDF (Marian's build).
+pub fn save_new_documents_as_pdf(on: bool) {
+    NEW_DOCUMENTS_AS_PDF.store(on, std::sync::atomic::Ordering::Relaxed);
+}
+
+fn default_save_format() -> &'static str {
+    if NEW_DOCUMENTS_AS_PDF.load(std::sync::atomic::Ordering::Relaxed) { "pdf" } else { "vectorcraft" }
+}
+
+/// Whether a document opens with every row of the Layers panel closed, whatever it was saved
+/// with. The app turns it on at startup ([`open_documents_with_layers_closed`]).
+static LAYERS_START_CLOSED: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+
+/// Have documents open with their layers closed in the Layers panel (Marian's build).
+pub fn open_documents_with_layers_closed(on: bool) {
+    LAYERS_START_CLOSED.store(on, std::sync::atomic::Ordering::Relaxed);
+}
+
 static NEXT_DOC_UID: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(1);
 
 /// The rows open in the Layers panel: the layers, sublayers and groups that show what they hold.
@@ -110,6 +133,7 @@ impl OpenRows {
     /// The rows `saved` in a file, else `doc`'s top-level layers.
     fn new(doc: &Document, saved: Option<Vec<NodeId>>) -> Self {
         let ids = match saved {
+            _ if LAYERS_START_CLOSED.load(std::sync::atomic::Ordering::Relaxed) => Default::default(),
             Some(ids) => ids.into_iter().collect(),
             None => doc.layers.iter().map(|l| l.id).collect(),
         };
@@ -254,7 +278,7 @@ impl DocState {
             uid: NEXT_DOC_UID.fetch_add(1, std::sync::atomic::Ordering::Relaxed),
             mask_view: None,
             transparency_grid,
-            format: "vectorcraft",
+            format: default_save_format(),
             save_options: Default::default(),
             save_artboards: vec![],
             converted: false,

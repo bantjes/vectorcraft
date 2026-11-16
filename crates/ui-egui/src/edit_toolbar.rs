@@ -543,7 +543,6 @@ pub(crate) fn drawer(app: &mut VectorcraftApp, ctx: &egui::Context) {
         // it open.
         app.ui.tools_drawer = false;
     }
-    ghost(ctx, &t);
 }
 
 /// A Show section toggle: lit while its control shows under the toolbar's tools. Fill and Stroke
@@ -644,7 +643,7 @@ fn row(ui: &mut Ui, t: &Tokens, tool: &'static ToolInfo, on: bool, dimmed: bool)
 }
 
 /// The tool being dragged, by the pointer (below and right of it, clear of the drop marker).
-fn ghost(ctx: &egui::Context, t: &Tokens) {
+pub(crate) fn ghost(ctx: &egui::Context, t: &Tokens) {
     let Some(d) = DragAndDrop::payload::<ToolDrag>(ctx) else { return };
     let (Some(at), Some(tool)) = (ctx.pointer_interact_pos(), tool_info(d.tool)) else { return };
     let r = Rect::from_min_size(at + vec2(8.0, 8.0), vec2(GHOST, GHOST));

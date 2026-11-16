@@ -74,6 +74,7 @@ pub(super) fn selection_overlay(app: &mut VectorcraftApp, p: &egui::Painter, xf:
     let show_box = app.session.tool_id() == "selection"
         && !app.session.tool_transforming()
         && app.ui.view.bounding_box
+        && !app.only_text_selected()
         && app.session.active().is_some_and(|st| !st.selection.is_empty() && st.selection.anchors.is_empty());
     let bbox = if show_box { app.selection_box() } else { None };
     let st = app.session.active();

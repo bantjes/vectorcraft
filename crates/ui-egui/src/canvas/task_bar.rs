@@ -42,6 +42,10 @@ pub(super) fn task_bar(app: &mut VectorcraftApp, ui: &mut Ui, xf: &Xf) {
     {
         return;
     }
+    // Type on its own shows no bar.
+    if !on_artboards && app.only_text_selected() {
+        return;
+    }
     let Some(b) = (if on_artboards { picked_artboards_bounds(app) } else { app.selection_bounds() }) else { return };
     let Some(st) = app.session.active() else { return };
     let n = st.selection.len();

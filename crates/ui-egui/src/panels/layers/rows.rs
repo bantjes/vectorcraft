@@ -202,7 +202,7 @@ pub(super) fn row(ui: &mut Ui, view: &View, item: &Row, out: &mut Out) {
     colour_bar(ui, n, r, x, color);
     x += 6.0 + depth as f32 * INDENT;
     // Disclosure triangle; Alt opens or closes everything inside too.
-    if has_children {
+    if has_children && !super::manual_only() {
         let dr = egui::Rect::from_min_size(egui::pos2(x, r.center().y - 8.0), vec2(14.0, 16.0));
         let dresp = ui.interact(dr, ui.scope_id().with(("disc", n.id.0)), Sense::click());
         icons::paint(ui, if open { "chevron-down" } else { "chevron-right" }, dr, t.text_dim);
@@ -217,7 +217,7 @@ pub(super) fn row(ui: &mut Ui, view: &View, item: &Row, out: &mut Out) {
             }
         }
     }
-    x += 16.0;
+    x += if super::manual_only() { 2.0 } else { 16.0 };
     // Thumbnail.
     let thumb_rect = view.opts.thumb(n).then(|| {
         let th = row_thumb(ui, view, &item.node, r, x);

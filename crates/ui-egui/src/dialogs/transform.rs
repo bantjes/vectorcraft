@@ -201,7 +201,7 @@ fn origin_params(d: &Dialog, mut p: Value) -> Value {
 fn command(app: &VectorcraftApp, d: &Dialog) -> (&'static str, Value) {
     let (id, mut params) = match d.kind.as_str() {
         "move" => ("object.move", json!({"dx": d.f64("dx", 0.0), "dy": d.f64("dy", 0.0)})),
-        "rotate" => ("object.rotate", json!({"angle": d.f64("angle", 0.0)})),
+        "rotate" => ("object.rotate", json!({"angle": d.f64("angle", 90.0)})),
         "scale" => {
             let sx = d.f64("sx", 100.0);
             let sy = if d.bool("uniform") { sx } else { d.f64("sy", 100.0) };
@@ -235,6 +235,11 @@ fn confirm(app: &mut VectorcraftApp, d: &Dialog) -> Result<Value, String> {
         params = with_scale_options(app, d, params)?;
     }
     let r = run_and_close(app, id, params)?;
+    if d.kind == "rotate" {
+        // Rotate opens on the angle it was last confirmed with.
+        app.ui.rotate_angle = Some(d.f64("angle", 90.0));
+        app.prefs_changed = true;
+    }
     if d.kind == "move" {
         app.ui.move_options = json!({"copy": d.bool("copy"), "objects": transform_objects(d), "preview": d.bool("preview")});
         // Move's Transform Patterns stays as confirmed: it is the preference it starts from.
@@ -301,6 +306,8 @@ mod tests {
         };
         let undo_steps = |app: &VectorcraftApp| app.session.doc().unwrap().history.undo.len();
         let steps = undo_steps(&app);
+        // Last confirmed at 0° (it opens on 90° before its first use).
+        app.ui.rotate_angle = Some(0.0);
         crate::menus::invoke(&mut app, "object.rotate", json!({}));
         frame(&mut app, None);
         assert!(!app.session.in_interaction(), "Preview is off when the dialog opens");

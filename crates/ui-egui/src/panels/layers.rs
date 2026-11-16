@@ -208,6 +208,7 @@ pub fn show(app: &mut VectorcraftApp, ui: &mut Ui) {
     let seen_current: Option<NodeId> = ui.data(|d| d.get_temp(key("seen-current"))).flatten();
     if current != seen_current {
         if rows.is_empty()
+            && !manual_only()
             && let Some(layer) = current
         {
             let around = doc.ancestry(layer).unwrap_or_default().split_last().map(|(_, a)| a.to_vec()).unwrap_or_default();
@@ -370,8 +371,18 @@ pub fn show(app: &mut VectorcraftApp, ui: &mut Ui) {
     see_selection(app, ui, selected);
 }
 
+/// Marian's build: rows open and close only from the panel menu (Expand and Collapse). Nothing
+/// opens a layer by itself (a click, a new layer, a selection on the canvas), and the rows have no
+/// disclosure triangle. The tests keep the behaviour they were written for.
+pub(super) fn manual_only() -> bool {
+    !cfg!(test)
+}
+
 /// Open the layers and groups around rows `ids`.
 fn open_around(app: &mut VectorcraftApp, doc: &Document, ids: &[NodeId]) {
+    if manual_only() {
+        return;
+    }
     let around: Vec<NodeId> =
         ids.iter().flat_map(|r| doc.ancestry(*r).unwrap_or_default().split_last().map(|(_, a)| a.to_vec()).unwrap_or_default()).collect();
     if let Some(st) = app.session.active_mut() {

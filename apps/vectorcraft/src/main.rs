@@ -25,6 +25,8 @@ mod gpu;
 mod linux_stylus;
 mod logging;
 #[cfg(target_os = "macos")]
+mod mac_font_signal;
+#[cfg(target_os = "macos")]
 mod mac_fonts;
 #[cfg(target_os = "macos")]
 mod mac_menu;
@@ -143,6 +145,8 @@ fn main() -> std::process::ExitCode {
     system_fonts::install();
     #[cfg(target_os = "macos")]
     mac_fonts::install();
+    vectorcraft_engine::save_new_documents_as_pdf(true);
+    vectorcraft_engine::open_documents_with_layers_closed(true);
     // VectorCraft's own Fonts folder, which text.addFontFiles copies fonts into.
     prefs_dir::install_fonts();
     // The log file lives in the settings directory, next to the preferences; opened after the
@@ -373,6 +377,7 @@ fn main() -> std::process::ExitCode {
                 #[cfg(target_os = "macos")]
                 {
                     open_documents::set_ui(&cc.egui_ctx);
+                    mac_font_signal::install(&cc.egui_ctx);
                     // The macOS menu bar, installed now so winit's default menu doesn't stay up.
                     if !in_window_menus {
                         app.services.native_menu = mac_menu::install(&cc.egui_ctx, &app);

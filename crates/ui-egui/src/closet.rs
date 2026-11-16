@@ -302,7 +302,12 @@ pub fn things() -> Vec<Thing> {
     let mut seen = std::collections::BTreeSet::new();
     for t in TOOL_GROUPS.iter().flat_map(|g| g.iter()) {
         if seen.insert(t.id) {
-            out.push(Thing { key: format!("tool:{}", t.id), kind: Kind::Tool, label: tl!(t.label).to_string(), icon: Some(icons::tool_icon(t.icon)) });
+            out.push(Thing {
+                key: format!("tool:{}", t.id),
+                kind: Kind::Tool,
+                label: tl!(t.label).to_string(),
+                icon: Some(icons::tool_icon(t.icon)),
+            });
         }
     }
     for (id, label) in crate::state::all_panels() {
@@ -374,6 +379,7 @@ pub(crate) fn command(app: &mut VectorcraftApp, id: &str, p: &Value) -> Option<R
                 }
             }
             leave_hidden_tool(app);
+            app.prefs_changed = true;
             Ok(list(app, None))
         })(),
         "closet.list" => (|| {
@@ -395,6 +401,8 @@ fn set(app: &mut VectorcraftApp, key: &str, to: Shelf) {
         app.ui.closet.moved.insert(key.to_string(), to);
     }
     leave_hidden_tool(app);
+    // Written at once: a session that doesn't end with Quit used to forget what was put away.
+    app.prefs_changed = true;
 }
 
 /// The active tool put away gives way to the Selection tool.
@@ -517,7 +525,7 @@ pub fn menu(app: &mut VectorcraftApp, ui: &mut Ui) {
 }
 
 fn shown_id() -> egui::Id {
-    egui::Id::new("closet-panel-shown")
+    egui::Id::unique("closet-panel-shown")
 }
 
 /// True while the Closet panel is showing (drawn this frame or the last): the toolbar's tools then
@@ -538,7 +546,13 @@ fn drop_shelves(ui: &mut Ui, t: &Tokens) -> Option<(&'static str, Shelf)> {
             let stroke = egui::Stroke::new(if hovering { 2.0 } else { 1.0 }, if hovering { t.accent } else { t.border });
             ui.painter().rect(r, egui::CornerRadius::same(6), if hovering { t.hover } else { t.panel_darker }, stroke, egui::StrokeKind::Inside);
             icons::paint(ui, icon, egui::Rect::from_center_size(r.left_center() + egui::vec2(16.0, 0.0), egui::vec2(16.0, 16.0)), t.text_dim);
-            ui.painter().text(r.left_center() + egui::vec2(30.0, 0.0), egui::Align2::LEFT_CENTER, tl!(label), egui::FontId::proportional(11.5), t.text_dim);
+            ui.painter().text(
+                r.left_center() + egui::vec2(30.0, 0.0),
+                egui::Align2::LEFT_CENTER,
+                tl!(label),
+                egui::FontId::proportional(11.5),
+                t.text_dim,
+            );
             if let Some(drag) = resp.dnd_release_payload::<crate::edit_toolbar::ToolDrag>() {
                 dropped = Some((drag.tool, to));
             }
@@ -548,6 +562,64 @@ fn drop_shelves(ui: &mut Ui, t: &Tokens) -> Option<(&'static str, Shelf)> {
 }
 
 /// Opens the Closet panel.
+/// While a tool is dragged from the toolbar: the Closet's and the Basement's doors beside the
+/// toolbar, to drop it on, whether or not the Closet panel is open.
+pub(crate) fn drag_shelves(app: &mut VectorcraftApp, ctx: &egui::Context) {
+    use crate::edit_toolbar::ToolDrag;
+    let Some(drag) = egui::DragAndDrop::payload::<ToolDrag>(ctx).map(|d| *d) else { return };
+    let Some(bar) = ctx.data(|d| d.get_temp::<egui::Rect>(crate::edit_toolbar::toolbar_id())) else { return };
+    if !drag.from_toolbar {
+        return;
+    }
+    let t = Tokens::get(ctx);
+    let pointer = ctx.pointer_interact_pos();
+    let size = egui::vec2(150.0, 44.0);
+    let screen = ctx.content_rect();
+    // By the pointer's height, clear of the Edit Toolbar drawer when it is open.
+    let drawer = ctx.memory(|m| m.area_rect(crate::edit_toolbar::drawer_id())).filter(|_| app.ui.tools_drawer);
+    let x = drawer.map_or(bar.right(), |d| d.right()) + 8.0;
+    let y = ctx.data(|d| d.get_temp::<f32>(egui::Id::unique("closet-drag-y"))).unwrap_or_else(|| {
+        let y =
+            pointer.map_or(bar.top(), |p| p.y - size.y).clamp(screen.top() + 4.0, (screen.bottom() - 2.0 * size.y - 12.0).max(screen.top() + 4.0));
+        ctx.data_mut(|d| d.insert_temp(egui::Id::unique("closet-drag-y"), y));
+        y
+    });
+    let released = ctx.input(|i| i.pointer.any_released());
+    let mut dropped = None;
+    egui::Area::new(egui::Id::unique("closet-drag-shelves")).order(egui::Order::Foreground).fixed_pos(egui::pos2(x, y)).interactable(false).show(
+        ctx,
+        |ui| {
+            for (label, icon, to) in [("Put in the Closet", "dc-closet", Shelf::Closet), ("Put in the Basement", "dc-basement", Shelf::Basement)] {
+                let (r, _) = ui.allocate_exact_size(size, egui::Sense::hover());
+                let over = pointer.is_some_and(|p| r.contains(p));
+                let stroke = egui::Stroke::new(if over { 2.0 } else { 1.0 }, if over { t.accent } else { t.border });
+                ui.painter().rect(r, egui::CornerRadius::same(6), if over { t.hover } else { t.panel }, stroke, egui::StrokeKind::Inside);
+                icons::paint(ui, icon, egui::Rect::from_center_size(r.left_center() + egui::vec2(18.0, 0.0), egui::vec2(18.0, 18.0)), t.text);
+                ui.painter().text(
+                    r.left_center() + egui::vec2(34.0, 0.0),
+                    egui::Align2::LEFT_CENTER,
+                    tl!(label),
+                    egui::FontId::proportional(12.0),
+                    t.text,
+                );
+                if over && released {
+                    dropped = Some(to);
+                }
+                ui.add_space(4.0);
+            }
+        },
+    );
+    if released {
+        ctx.data_mut(|d| d.remove::<f32>(egui::Id::unique("closet-drag-y")));
+    }
+    if let Some(to) = dropped {
+        egui::DragAndDrop::clear_payload(ctx);
+        if let Err(e) = app.run("closet.set", json!({ "key": format!("tool:{}", drag.tool), "shelf": to.name() })) {
+            app.ui.status = e;
+        }
+    }
+}
+
 pub fn open(app: &mut VectorcraftApp) {
     if let Err(e) = app.run("window.panel", json!({ "panel": ID })) {
         app.ui.status = e;

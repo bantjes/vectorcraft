@@ -544,6 +544,9 @@ pub struct UiState {
     /// never used): it opens with them.
     #[serde(default)]
     pub move_options: Value,
+    /// The angle the Rotate dialog was last confirmed with (none: never used, it opens on 90°).
+    #[serde(default)]
+    pub rotate_angle: Option<f64>,
     /// The Transform Each fields it was last confirmed with (scale, move, rotate, reflect, random,
     /// reference point, Transform Objects and Preview, not Copy; null: never used): it opens on
     /// them (#1732).
@@ -783,7 +786,8 @@ impl Default for UiState {
         Self {
             legacy_language: None,
             brightness: Brightness::MediumDark,
-            dock_tab: DockTab::Properties,
+            // Marian's build opens on Layers; the tests keep the layout they were written for.
+            dock_tab: if cfg!(test) { DockTab::Properties } else { DockTab::Layers },
             dock_tab_order: Vec::new(),
             dock_collapsed: false,
             open_panel: None,
@@ -855,6 +859,7 @@ impl Default for UiState {
             offset_path: Value::Null,
             simplify: Value::Null,
             move_options: Value::Null,
+            rotate_angle: None,
             transform_each: Value::Null,
             home: None,
             layers_panel: Default::default(),
