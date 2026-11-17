@@ -53,11 +53,6 @@ impl eframe::App for App {
             let inset = mac_window::center_buttons(frame, ui.ctx().zoom_factor(), bar);
             self.app.titlebar_inset = inset.unwrap_or(mac_window::DEFAULT_INSET);
         }
-        // The system said fonts were installed, removed, activated or deactivated: list them now.
-        #[cfg(target_os = "macos")]
-        if super::mac_font_signal::take() {
-            self.app.fonts_changed();
-        }
         file_access::unconfined(|| self.app.ui(ui));
         // Preferences are written when confirmed, not only at exit: a session ended any other way
         // (the system shutting down, the process ended or crashing) used to lose them (#1747).
@@ -84,6 +79,16 @@ impl eframe::App for App {
 impl App {
     fn logic_frame(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         self.frames = ctx.cumulative_frame_nr();
+        // The system said fonts were installed, removed, activated or deactivated: list them now.
+        // Here rather than in `ui`, which eframe skips while the window is hidden behind others
+        // (as it often is while a font manager is used).
+        #[cfg(target_os = "macos")]
+        if super::mac_font_signal::take(ctx) {
+            self.app.fonts_changed();
+            // The look runs on another thread: come back for its answer even if nothing else
+            // wakes the app.
+            ctx.request_repaint_after(std::time::Duration::from_millis(50));
+        }
         if let Some(why) = self.graphics_loss.take() {
             // eframe can't give a window a new device: the user saves and starts again.
             self.graphics_lost = self.app.graphics_lost(&why);
